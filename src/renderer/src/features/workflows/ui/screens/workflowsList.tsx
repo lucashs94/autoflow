@@ -4,45 +4,51 @@ import { EntityList } from '@renderer/components/entityList'
 import { Button } from '@renderer/components/ui/button'
 import { formatDistanceToNow } from 'date-fns'
 import { WorkflowIcon } from 'lucide-react'
-import { Suspense } from 'react'
+import { Suspense, useState } from 'react'
+import { useWorkflows } from '../../hooks/useWorkflows'
+import { CreateWorkflowDialog } from '../components/dialog/createWorkflowDialog'
 import { WorkflowsSkeleton } from '../components/skeleton'
 
 export function WorkflowsList() {
-  return (
-    <EntityContainer className="bg-muted">
-      <div className="flex flex-col h-full">
-        <div className="flex justify-between">
-          <div className="flex flex-col">
-            <h1 className="text-3xl font-bold">Workflows</h1>
+  const [openDialog, setOpenDialog] = useState(false)
 
-            <p className="text-muted-foreground">Manage your workflows</p>
+  const { data: workflows } = useWorkflows()
+
+  const handleCreate = () => {
+    setOpenDialog(true)
+  }
+
+  return (
+    <>
+      <CreateWorkflowDialog
+        open={openDialog}
+        onOpenChange={setOpenDialog}
+      />
+
+      <EntityContainer className="bg-muted">
+        <div className="flex flex-col h-full">
+          <div className="flex justify-between">
+            <div className="flex flex-col">
+              <h1 className="text-3xl font-bold">Workflows</h1>
+
+              <p className="text-muted-foreground">Manage your workflows</p>
+            </div>
+
+            <Button onClick={handleCreate}>Novo Workflow</Button>
           </div>
 
-          {/* <CreateWorkflowDialog /> */}
-          <Button>Novo Workflow</Button>
+          <div className="h-full py-6">
+            <Suspense fallback={<WorkflowsSkeleton />}>
+              <EntityList
+                items={workflows || []}
+                getKey={(item) => item.id}
+                renderItem={(item) => <WorkflowItem data={item} />}
+              />
+            </Suspense>
+          </div>
         </div>
-
-        <div className="h-full py-6">
-          <Suspense fallback={<WorkflowsSkeleton />}>
-            {/* <UserWorkflows /> */}
-
-            <EntityList
-              items={[1, 2, 3, 4]}
-              renderItem={() => (
-                <WorkflowItem
-                  data={{
-                    id: 1,
-                    name: 'Workflow 1',
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                  }}
-                />
-              )}
-            />
-          </Suspense>
-        </div>
-      </div>
-    </EntityContainer>
+      </EntityContainer>
+    </>
   )
 }
 

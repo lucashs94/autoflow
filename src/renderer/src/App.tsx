@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
+import { Provider as JotaiProvider } from 'jotai'
+import { BadgeAlertIcon, BadgeCheckIcon, BadgeXIcon } from 'lucide-react'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from './components/themeProvider'
 import { routeTree } from './routeTree.gen'
@@ -20,8 +22,18 @@ export function App(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark">
-        <RouterProvider router={router} />
-        <Toaster richColors />
+        <JotaiProvider>
+          <RouterProvider router={router} />
+          <Toaster
+            closeButton
+            swipeDirections={['bottom', 'right']}
+            icons={{
+              success: <BadgeCheckIcon className="text-emerald-500" />,
+              error: <BadgeXIcon className="text-red-500" />,
+              warning: <BadgeAlertIcon className="text-yellow-600" />,
+            }}
+          />
+        </JotaiProvider>
       </ThemeProvider>
     </QueryClientProvider>
   )

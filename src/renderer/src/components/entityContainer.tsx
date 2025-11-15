@@ -12,7 +12,7 @@ export const EntityContainer = ({
   return (
     <div
       className={cn(
-        `h-full p-4 md:px-10 md:py-10 min-h-screen w-full`,
+        ` min-h-screen w-full h-full p-4 md:px-10 md:py-10`,
         className
       )}
     >

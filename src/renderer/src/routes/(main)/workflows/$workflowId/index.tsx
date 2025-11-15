@@ -1,5 +1,11 @@
-import { Button } from '@renderer/components/ui/button'
-import { createFileRoute, useParams, useRouter } from '@tanstack/react-router'
+import {
+  Editor,
+  EditorError,
+  EditorLoading,
+} from '@renderer/features/editor/ui/screens/editor'
+import { createFileRoute, useParams } from '@tanstack/react-router'
+import { Suspense } from 'react'
+import { ErrorBoundary } from 'react-error-boundary'
 
 export const Route = createFileRoute('/(main)/workflows/$workflowId/')({
   component: RouteComponent,
@@ -8,19 +14,15 @@ export const Route = createFileRoute('/(main)/workflows/$workflowId/')({
 function RouteComponent() {
   const { workflowId } = useParams({ from: '/(main)/workflows/$workflowId/' })
 
-  const router = useRouter()
+  console.log(workflowId)
 
   return (
-    <div className="flex w-full flex-col gap-8">
-      <Button
-        onClick={() => router.navigate({ to: `/workflows` })}
-        size={'sm'}
-        className="max-w-[200px]"
-      >
-        Go to workflow
-      </Button>
-
-      <span className="text-2xl font-bold">Hello {workflowId}</span>
-    </div>
+    <ErrorBoundary fallback={<EditorError />}>
+      <Suspense fallback={<EditorLoading />}>
+        <main className="min-h-screen w-full h-full flex flex-col gap-8">
+          <Editor workflowId={workflowId} />
+        </main>
+      </Suspense>
+    </ErrorBoundary>
   )
 }

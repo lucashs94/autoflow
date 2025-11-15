@@ -1,8 +1,17 @@
-import { contextBridge } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import { contextBridge, ipcRenderer } from 'electron'
 
 // Custom APIs for renderer
-const api = {}
+const api = {
+  workflows: {
+    getMany: () => ipcRenderer.invoke('workflows:getMany'),
+    getOne: (workflowId: string) =>
+      ipcRenderer.invoke('workflows:getOne', workflowId),
+    create: (name: string) => ipcRenderer.invoke('workflows:create', name),
+    updateWorkflowName: (workflowId: string, name: string) =>
+      ipcRenderer.invoke('workflows:updateName', workflowId, name),
+  },
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

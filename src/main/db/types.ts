@@ -1,0 +1,35 @@
+export type WorkflowType = {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type WorkflowReturnType = {
+  id: string
+  name: string
+  nodes: NodeType[]
+  edges: EdgeType[]
+}
+
+export type NodeType = {
+  id: string
+  workflowId: string
+  name: string
+  type: string
+  position: string
+  data: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type EdgeType = {
+  id: string
+  workflowId: string
+  fromNodeId: string
+  toNodeId: string
+  fromOutput: string
+  toInput: string
+  createdAt: string
+  updatedAt: string
+}
