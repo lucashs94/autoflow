@@ -3,6 +3,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from '@tanstack/react-query'
+import type { Edge, Node } from '@xyflow/react'
 import { toast } from 'sonner'
 
 export const useWorkflows = () => {
@@ -50,6 +51,35 @@ export const useUpdateWorkflowName = () => {
     onSuccess: (_, { workflowId }) => {
       toast.success('Workflow atualizado com sucesso!', {
         id: 'update-workflow-name',
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['workflow', workflowId],
+      })
+    },
+  })
+}
+
+export const useUpdateWorkflow = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationKey: ['updateWorkflow'],
+    mutationFn: (params: {
+      workflowId: string
+      nodes: Node[]
+      edges: Edge[]
+    }) =>
+      window.api.workflows.updateWorkflow(
+        params.workflowId,
+        params.nodes,
+        params.edges
+      ),
+    onError: () => {
+      toast.error('Erro ao atualizar workflow!', { id: 'update-workflow' })
+    },
+    onSuccess: (_, { workflowId }) => {
+      toast.success('Workflow atualizado com sucesso!', {
+        id: 'update-workflow',
       })
       queryClient.invalidateQueries({
         queryKey: ['workflow', workflowId],

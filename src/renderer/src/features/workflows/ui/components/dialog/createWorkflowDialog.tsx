@@ -49,6 +49,7 @@ export function CreateWorkflowDialog({ open, onOpenChange }: Props) {
   const onSubmit = useCallback(
     (values: FormType) => {
       toast.loading('Criando workflow...', { id: 'create-workflow' })
+
       mutate(values.name, {
         onSuccess: (data) => {
           router.navigate({ to: `/workflows/${data.id}` })

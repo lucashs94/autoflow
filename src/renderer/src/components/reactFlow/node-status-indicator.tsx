@@ -1,7 +1,6 @@
+import { cn } from '@renderer/lib/utils'
 import { LoaderCircle } from 'lucide-react'
 import { type ReactNode } from 'react'
-
-import { cn } from '@/lib/utils'
 
 export type NodeStatus = 'loading' | 'success' | 'error' | 'initial'
 

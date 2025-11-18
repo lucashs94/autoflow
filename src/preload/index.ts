@@ -1,5 +1,7 @@
 import { electronAPI } from '@electron-toolkit/preload'
+import type { Node as FlowNode } from '@xyflow/react'
 import { contextBridge, ipcRenderer } from 'electron'
+import { edgesServiceType } from '../main/@types/workflows'
 
 // Custom APIs for renderer
 const api = {
@@ -10,6 +12,11 @@ const api = {
     create: (name: string) => ipcRenderer.invoke('workflows:create', name),
     updateWorkflowName: (workflowId: string, name: string) =>
       ipcRenderer.invoke('workflows:updateName', workflowId, name),
+    updateWorkflow: (
+      workflowId: string,
+      nodes: FlowNode[],
+      edges: edgesServiceType[]
+    ) => ipcRenderer.invoke('workflows:update', workflowId, nodes, edges),
   },
 }
 

@@ -1,9 +1,12 @@
+import type { Node as FlowNode } from '@xyflow/react'
 import { ipcMain } from 'electron'
+import { edgesServiceType } from '../@types/workflows'
 import {
   createWorkflowService,
   getWorkflowService,
   getWorkflowsService,
   updateWorkflowNameService,
+  updateWorkflowService,
 } from '../services/workflows'
 
 ipcMain.handle('workflows:getMany', async () => getWorkflowsService())
@@ -17,4 +20,9 @@ ipcMain.handle(
   'workflows:updateName',
   async (_, workflowId: string, name: string) =>
     updateWorkflowNameService(workflowId, name)
+)
+ipcMain.handle(
+  'workflows:update',
+  async (_, workflowId: string, nodes: FlowNode[], edges: edgesServiceType[]) =>
+    updateWorkflowService(workflowId, nodes, edges)
 )

@@ -23,6 +23,8 @@ export type NodeType = {
   updatedAt: string
 }
 
+export type CreateNodeType = Omit<NodeType, 'createdAt' | 'updatedAt'>
+
 export type EdgeType = {
   id: string
   workflowId: string
@@ -33,3 +35,5 @@ export type EdgeType = {
   createdAt: string
   updatedAt: string
 }
+
+export type CreateEdgeType = Omit<EdgeType, 'createdAt' | 'updatedAt'>

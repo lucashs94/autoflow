@@ -2,8 +2,8 @@ import { ErrorView } from '@renderer/components/errorView'
 import { LoadingView } from '@renderer/components/loadingView'
 import { Button } from '@renderer/components/ui/button'
 import { nodeComponents } from '@renderer/config/nodeComponents'
+import { editorAtom } from '@renderer/features/editor/store/atom'
 import { useWorkflow } from '@renderer/features/workflows/hooks/useWorkflows'
-import { editorAtom } from '@renderer/store/atom'
 import {
   addEdge,
   applyEdgeChanges,
@@ -25,7 +25,7 @@ import { useCallback, useState } from 'react'
 import { AddNodeBtn } from '../components/addNodeBtn'
 import { EditorHeaderName } from '../components/editorHeaderName'
 import { ExecuteWorkflowBtn } from '../components/executeWorkflowBtn'
-import { SaveWorkflowBtn } from '../components/saveWorkflowBtn copy'
+import { SaveWorkflowBtn } from '../components/saveWorkflowBtn'
 
 export function Editor({ workflowId }: { workflowId: string }) {
   const setEditorInstance = useSetAtom(editorAtom)
@@ -83,7 +83,11 @@ export function Editor({ workflowId }: { workflowId: string }) {
             <ExecuteWorkflowBtn workflowId={workflowId} />
             <SaveWorkflowBtn workflowId={workflowId} />
 
-            <Button size="icon-lg">
+            <Button
+              size="icon-lg"
+              variant={'outline'}
+              className="bg-accent! border-primary! border-2!"
+            >
               <MoreHorizontalIcon className="size-5" />
             </Button>
           </div>

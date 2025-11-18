@@ -1,6 +1,12 @@
 import { createId } from '@paralleldrive/cuid2'
 import { db } from '.'
-import { EdgeType, NodeType, WorkflowType } from './types'
+import {
+  CreateEdgeType,
+  CreateNodeType,
+  EdgeType,
+  NodeType,
+  WorkflowType,
+} from './types'
 
 export function createWorkflow(name: string) {
   const workflowId = createId()
@@ -52,4 +58,36 @@ export function getWorkflow(workflowId: string) {
   })
 
   return { id: workflow.id, name: workflow.name, nodes, edges }
+}
+
+export function updateWorkflow(
+  workflowId: string,
+  nodes: CreateNodeType[],
+  edges: CreateEdgeType[]
+) {
+  db.transaction(() => {
+    // delete old nodes and edges
+    db.prepare('DELETE FROM nodes WHERE workflowId = ?').run(workflowId)
+    db.prepare('DELETE FROM connections WHERE workflowId = ?').run(workflowId)
+
+    // insert new nodes and edges
+    nodes.forEach((node) => {
+      db.prepare(
+        `INSERT INTO nodes (id, workflowId, name, type, position, data) VALUES (?, ?, ?, ?, ?, ?)`
+      ).run(node.id, workflowId, node.name, node.type, node.position, node.data)
+    })
+
+    edges.forEach((edge) => {
+      db.prepare(
+        `INSERT INTO connections (id, workflowId, fromNodeId, toNodeId, fromOutput, toInput) VALUES (?, ?, ?, ?, ?, ?)`
+      ).run(
+        edge.id,
+        workflowId,
+        edge.fromNodeId,
+        edge.toNodeId,
+        edge.fromOutput,
+        edge.toInput
+      )
+    })
+  })()
 }
