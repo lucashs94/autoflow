@@ -4,6 +4,7 @@ import { NodeExecutor } from '../types/types'
 
 export const executorRegistry: Partial<Record<NodeType, NodeExecutor>> = {
   [NodeType.HTTP_REQUEST]: TaskRegistry.HTTP_REQUEST.executor,
+  [NodeType.NAVIGATION]: TaskRegistry.NAVIGATION.executor,
 }
 
 export const getExecutor = (type: NodeType): NodeExecutor => {

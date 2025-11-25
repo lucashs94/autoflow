@@ -9,10 +9,11 @@ Handlebars.registerHelper('json', (context) => {
 
 type ExecutorDataProps = {
   name?: string
-  url?: string
+  selector?: string
+  shouldBe?: 'visible' | 'hidden'
 }
 
-export const navigationExecutor: NodeExecutor<ExecutorDataProps> = async ({
+export const typeTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
   context,
   data,
   nodeId,

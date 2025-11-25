@@ -9,14 +9,13 @@ Handlebars.registerHelper('json', (context) => {
 
 type ExecutorDataProps = {
   name?: string
-  url?: string
+  selector?: string
+  shouldBe?: 'visible' | 'hidden'
 }
 
-export const navigationExecutor: NodeExecutor<ExecutorDataProps> = async ({
-  context,
-  data,
-  nodeId,
-}) => {
+export const waitForElementNodeExecutor: NodeExecutor<
+  ExecutorDataProps
+> = async ({ context, data, nodeId }) => {
   publishStatus({
     nodeId,
     status: 'loading',

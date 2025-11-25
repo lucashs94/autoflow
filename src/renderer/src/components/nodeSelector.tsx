@@ -2,7 +2,7 @@ import { createId } from '@paralleldrive/cuid2'
 import { NodeType } from '@renderer/types/nodes'
 import { makeUniqueName } from '@renderer/utils/uniqueName'
 import { useReactFlow } from '@xyflow/react'
-import { ChromiumIcon, GlobeIcon } from 'lucide-react'
+import { ChromiumIcon, GlobeIcon, HourglassIcon } from 'lucide-react'
 import { useCallback } from 'react'
 import { Separator } from './ui/separator'
 import {
@@ -42,6 +42,12 @@ const executionNodes: NodeTypeOption[] = [
     label: 'Navigate to URL',
     description: 'Go to page based on URL',
     icon: ChromiumIcon,
+  },
+  {
+    type: NodeType.WAIT_FOR_ELEMENT,
+    label: 'Wait for Element',
+    description: 'Wait for element to be visible or hidden',
+    icon: HourglassIcon,
   },
 ]
 

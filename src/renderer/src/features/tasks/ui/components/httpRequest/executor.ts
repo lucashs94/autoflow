@@ -8,14 +8,14 @@ Handlebars.registerHelper('json', (context) => {
   return new Handlebars.SafeString(jsonString)
 })
 
-type HttpRequestData = {
+type ExecutorDataProps = {
   name?: string
   endpoint?: string
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   body?: string
 }
 
-export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
+export const httpRequestExecutor: NodeExecutor<ExecutorDataProps> = async ({
   context,
   data,
   nodeId,
@@ -25,10 +25,11 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
     status: 'loading',
   })
 
-  await new Promise((resolve) => setTimeout(resolve, 3_000))
+  // TODO: Remove this wait simulate point
+  await new Promise((resolve) => setTimeout(resolve, 1_000))
 
   try {
-    const fn = async () => {
+    const result = (async () => {
       if (!data.endpoint || !data.name || !data.method) {
         publishStatus({
           nodeId,
@@ -73,14 +74,12 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
         ...context,
         [data.name]: responsePayload,
       }
-    }
+    })()
 
     publishStatus({
       nodeId,
       status: 'success',
     })
-
-    const result = await fn()
 
     return result
   } catch (error) {

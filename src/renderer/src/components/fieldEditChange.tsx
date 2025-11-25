@@ -16,9 +16,11 @@ export function FieldEditChange({ id }: Props) {
   const { getNodes, setNodes } = useReactFlow()
   const nodes = getNodes()
 
+  const nameFromReactFlow = nodes.find((n) => n.id === id)?.data.name
+
   const { data: node } = useNode(id)
 
-  const [name, setName] = useState(node?.data?.name || '')
+  const [name, setName] = useState(node?.data?.name ?? nameFromReactFlow ?? '')
   const [isEditing, setIsEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const updateName = useUpdateNodeName()
