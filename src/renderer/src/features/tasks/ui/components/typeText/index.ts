@@ -1,7 +1,7 @@
 import { typeTextExecutor } from './executor'
 import { TypeTextNode } from './node'
 
-export const waitForElementTask = {
+export const typeTextTask = {
   node: TypeTextNode,
   executor: typeTextExecutor,
 }

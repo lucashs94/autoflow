@@ -5,19 +5,19 @@ import {
   type Node,
   type NodeProps as xyflowNodeProps,
 } from '@xyflow/react'
-import { TypeIcon } from 'lucide-react'
+import { MousePointerIcon } from 'lucide-react'
 import { memo, useState } from 'react'
 import { FormValues, SettingsDialog } from './dialog'
 
 type NodeProps = {
   name: string
   selector?: string
-  text?: string
+  timeout?: number
 }
 
 type NodeType = Node<NodeProps>
 
-export const TypeTextNode = memo(
+export const ClickElementNode = memo(
   (props: xyflowNodeProps<NodeType>) => {
     const [dialogOpen, setDialogOpen] = useState(false)
     const { setNodes } = useReactFlow()
@@ -66,7 +66,7 @@ export const TypeTextNode = memo(
         <BaseExecutionNode
           {...props}
           id={props.id}
-          icon={TypeIcon}
+          icon={MousePointerIcon}
           name={props.data.name}
           description={description}
           status={nodeStatus}

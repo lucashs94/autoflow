@@ -12,6 +12,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,7 +25,10 @@ import { z } from 'zod'
 
 const formSchema = z.object({
   selector: z.string().min(1, { message: 'Selector is required' }),
-  text: z.string().min(1, `Text is required`),
+  timeout: z.coerce
+    .number<number>()
+    .min(1_000)
+    .max(60_000, `Should be lower than 60000`),
 })
 
 export type FormValues = z.infer<typeof formSchema>
@@ -44,11 +48,11 @@ export const SettingsDialog = ({
   onSubmit,
   defaultValues = {},
 }: Props) => {
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       selector: defaultValues.selector || '',
-      text: defaultValues.text || '',
+      timeout: Number(defaultValues.timeout) || 30_000,
     },
   })
 
@@ -61,7 +65,7 @@ export const SettingsDialog = ({
     if (open) {
       form.reset({
         selector: defaultValues.selector || '',
-        text: defaultValues.text || '',
+        timeout: defaultValues.timeout || 30_000,
       })
     }
   }, [open, defaultValues, form])
@@ -109,20 +113,24 @@ export const SettingsDialog = ({
 
             <FormField
               control={form.control}
-              name="text"
+              name="timeout"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Text</FormLabel>
+                  <FormLabel>Timeout (miliseconds)</FormLabel>
 
                   <FormControl>
                     <Input
                       {...field}
-                      className=" bg-input/90!"
-                      placeholder="example"
+                      className="bg-input/90!"
+                      placeholder="30000"
+                      type="number"
                     />
                   </FormControl>
-
                   <FormMessage />
+
+                  <FormDescription>
+                    min: 1000 ms (10 s) <br /> max: 60000 ms (60 s)
+                  </FormDescription>
                 </FormItem>
               )}
             />

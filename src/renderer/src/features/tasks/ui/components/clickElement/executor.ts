@@ -13,7 +13,7 @@ type ExecutorDataProps = {
   text?: string
 }
 
-export const typeTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
+export const clickElementExecutor: NodeExecutor<ExecutorDataProps> = async ({
   context,
   data,
   nodeId,
