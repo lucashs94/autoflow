@@ -5,7 +5,7 @@ import { GlobeIcon } from 'lucide-react'
 import { memo, useState } from 'react'
 // import { useNodeStatus } from '../../hooks/useNodeStatus'
 import { BaseExecutionNode } from '@renderer/components/nodes/baseExecutionNode'
-import { useNodeStatus } from '@renderer/features/tasks/nodeStatusChannel'
+import { useNodeStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { HttpRequestDialog, HttpRequestFormValues } from './dialog'
 
 type HttpRequestNodeProps = {

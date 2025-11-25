@@ -1,7 +1,7 @@
 import Handlebars from 'handlebars'
 import ky, { Options as KyOptions } from 'ky'
-import { publishStatus } from '../../../nodeStatusChannel'
-import { NodeExecutor } from '../../../types'
+import { publishStatus } from '../../../channels/nodeStatusChannel'
+import { NodeExecutor } from '../../../types/types'
 
 Handlebars.registerHelper('json', (context) => {
   const jsonString = JSON.stringify(context, null, 2)

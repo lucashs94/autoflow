@@ -1,6 +1,6 @@
-import { TaskRegistry } from '@renderer/features/tasks/taskRegistry'
+import { TaskRegistry } from '@renderer/features/tasks/registries/taskRegistry'
 import { NodeType } from '@renderer/types/nodes'
-import { NodeExecutor } from './types'
+import { NodeExecutor } from '../types/types'
 
 export const executorRegistry: Partial<Record<NodeType, NodeExecutor>> = {
   [NodeType.HTTP_REQUEST]: TaskRegistry.HTTP_REQUEST.executor,

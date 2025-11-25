@@ -1,5 +1,5 @@
 import { BaseExecutionNode } from '@renderer/components/nodes/baseExecutionNode'
-import { useNodeStatus } from '@renderer/features/tasks/nodeStatusChannel'
+import { useNodeStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import {
   useReactFlow,
   type Node,

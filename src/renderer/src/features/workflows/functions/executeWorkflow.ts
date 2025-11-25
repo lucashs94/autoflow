@@ -1,4 +1,4 @@
-import { getExecutor } from '@renderer/features/tasks/executorRegistry'
+import { getExecutor } from '@renderer/features/tasks/registries/executorRegistry'
 import { NodeType } from '@renderer/types/nodes'
 import { topologicalSort } from '../utils/topologicalSort'
 

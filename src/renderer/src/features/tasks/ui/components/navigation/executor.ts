@@ -1,5 +1,5 @@
-import { publishStatus } from '@renderer/features/tasks/nodeStatusChannel'
-import { NodeExecutor } from '@renderer/features/tasks/types'
+import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
+import { NodeExecutor } from '@renderer/features/tasks/types/types'
 import Handlebars from 'handlebars'
 
 Handlebars.registerHelper('json', (context) => {

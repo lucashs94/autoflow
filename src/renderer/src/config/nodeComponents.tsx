@@ -1,5 +1,5 @@
 import { InitialNode } from '@renderer/components/nodes/initialNode'
-import { TaskRegistry } from '@renderer/features/tasks/taskRegistry'
+import { TaskRegistry } from '@renderer/features/tasks/registries/taskRegistry'
 import { NodeType } from '@renderer/types/nodes'
 import { NodeTypes } from '@xyflow/react'
 
