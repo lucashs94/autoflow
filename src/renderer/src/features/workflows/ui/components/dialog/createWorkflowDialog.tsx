@@ -52,7 +52,7 @@ export function CreateWorkflowDialog({ open, onOpenChange }: Props) {
 
       mutate(values.name, {
         onSuccess: (data) => {
-          router.navigate({ to: `/workflows/${data.id}` })
+          router.navigate({ to: `/workflows/${data.workflowId}` })
           onOpenChange(false)
         },
       })

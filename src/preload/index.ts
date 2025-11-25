@@ -1,23 +1,12 @@
 import { electronAPI } from '@electron-toolkit/preload'
-import type { Node as FlowNode } from '@xyflow/react'
-import { contextBridge, ipcRenderer } from 'electron'
-import { edgesServiceType } from '../main/@types/workflows'
+import { contextBridge } from 'electron'
+import { nodes } from './nodes.preload'
+import { workflows } from './workflows.preload'
 
 // Custom APIs for renderer
 const api = {
-  workflows: {
-    getMany: () => ipcRenderer.invoke('workflows:getMany'),
-    getOne: (workflowId: string) =>
-      ipcRenderer.invoke('workflows:getOne', workflowId),
-    create: (name: string) => ipcRenderer.invoke('workflows:create', name),
-    updateWorkflowName: (workflowId: string, name: string) =>
-      ipcRenderer.invoke('workflows:updateName', workflowId, name),
-    updateWorkflow: (
-      workflowId: string,
-      nodes: FlowNode[],
-      edges: edgesServiceType[]
-    ) => ipcRenderer.invoke('workflows:update', workflowId, nodes, edges),
-  },
+  workflows,
+  nodes,
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

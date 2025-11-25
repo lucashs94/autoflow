@@ -5,7 +5,7 @@ import { Button } from '@renderer/components/ui/button'
 import { formatDistanceToNow } from 'date-fns'
 import { WorkflowIcon } from 'lucide-react'
 import { Suspense, useState } from 'react'
-import { useWorkflows } from '../../hooks/useWorkflows'
+import { useDeleteWorkflow, useWorkflows } from '../../hooks/useWorkflows'
 import { CreateWorkflowDialog } from '../components/dialog/createWorkflowDialog'
 import { WorkflowsSkeleton } from '../components/skeleton'
 
@@ -53,10 +53,10 @@ export function WorkflowsList() {
 }
 
 export const WorkflowItem = ({ data }: { data: any }) => {
-  // const removeWorkflow = useRemoveWorkflow()
+  const removeWorkflow = useDeleteWorkflow()
 
   const handleRemove = () => {
-    // removeWorkflow.mutate({ id: data.id })
+    removeWorkflow.mutate(data.id)
   }
 
   return (
@@ -65,9 +65,14 @@ export const WorkflowItem = ({ data }: { data: any }) => {
       title={data.name}
       subtitle={
         <>
-          Updated {formatDistanceToNow(data.updatedAt, { addSuffix: true })}{' '}
+          Updated{' '}
+          {formatDistanceToNow(data.updatedAt, {
+            addSuffix: true,
+          })}{' '}
           &bull; Created{' '}
-          {formatDistanceToNow(data.createdAt, { addSuffix: true })}
+          {formatDistanceToNow(data.createdAt, {
+            addSuffix: true,
+          })}
         </>
       }
       image={
@@ -76,7 +81,7 @@ export const WorkflowItem = ({ data }: { data: any }) => {
         </div>
       }
       onRemove={handleRemove}
-      // isRemoving={removeWorkflow.isPending}
+      isRemoving={removeWorkflow.isPending}
     />
   )
 }

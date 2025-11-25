@@ -5,7 +5,12 @@ import {
 } from '@tanstack/react-query'
 import type { Edge, Node } from '@xyflow/react'
 import { toast } from 'sonner'
+import { executeWorkflow } from '../functions/executeWorkflow'
 
+/**
+ * Hook to fetch all workflows using suspense
+ * @returns The list of workflows for the authenticated user.
+ */
 export const useWorkflows = () => {
   return useSuspenseQuery({
     queryKey: ['workflows'],
@@ -13,6 +18,10 @@ export const useWorkflows = () => {
   })
 }
 
+/**
+ * Hook get a single workflow
+ * * @returns a workflows with their nodes and edges
+ */
 export const useWorkflow = (workflowId: string) => {
   return useSuspenseQuery({
     queryKey: ['workflow', workflowId],
@@ -20,6 +29,9 @@ export const useWorkflow = (workflowId: string) => {
   })
 }
 
+/**
+ * Hook to create new workflow
+ */
 export const useCreateWorkflow = () => {
   const queryClient = useQueryClient()
 
@@ -36,6 +48,36 @@ export const useCreateWorkflow = () => {
   })
 }
 
+/**
+ * Hook to remove a workflow
+ */
+export const useDeleteWorkflow = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationKey: ['deleteWorkflow'],
+    mutationFn: (workflowId: string) => window.api.workflows.delete(workflowId),
+    onError: (error) => {
+      console.log(error)
+
+      toast.error('Erro ao excluir workflow!', {
+        id: 'delete-workflow',
+      })
+    },
+    onSuccess: () => {
+      toast.success('Workflow excluído com sucesso!', {
+        id: 'delete-workflow',
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['workflows'],
+      })
+    },
+  })
+}
+
+/**
+ * Hook to update a workflow name
+ */
 export const useUpdateWorkflowName = () => {
   const queryClient = useQueryClient()
 
@@ -59,6 +101,9 @@ export const useUpdateWorkflowName = () => {
   })
 }
 
+/**
+ * Hook to update a workflow
+ */
 export const useUpdateWorkflow = () => {
   const queryClient = useQueryClient()
 
@@ -84,6 +129,21 @@ export const useUpdateWorkflow = () => {
       queryClient.invalidateQueries({
         queryKey: ['workflow', workflowId],
       })
+    },
+  })
+}
+
+/**
+ * Hook to execute a workflow
+ */
+export const useExecuteWorkflow = () => {
+  return useMutation({
+    mutationFn: async (workflowId: string) => await executeWorkflow(workflowId),
+    onSuccess: () => {
+      toast.success(`Workflow executed!`)
+    },
+    onError: (error) => {
+      toast.error(`Failed to execute workflow: ${error.message}`)
     },
   })
 }

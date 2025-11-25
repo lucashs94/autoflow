@@ -16,7 +16,7 @@ interface EmptyViewProps {
 
 export const EmptyView = ({ message, onNew }: EmptyViewProps) => {
   return (
-    <Empty className="border border-dashed bg-background/50">
+    <Empty className="border border-white/20 border-dashed bg-background/50">
       <EmptyHeader>
         <EmptyMedia variant={'icon'}>
           <PackageOpenIcon className="" />

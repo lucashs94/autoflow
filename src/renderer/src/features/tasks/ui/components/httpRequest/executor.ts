@@ -1,8 +1,7 @@
-import { NodeExecutor } from '@/features/executions/types'
-import { statusChannel } from '@/inngest/channels/statusChannel'
 import Handlebars from 'handlebars'
-import { NonRetriableError } from 'inngest'
 import ky, { Options as KyOptions } from 'ky'
+import { publishStatus } from '../../../nodeStatusChannel'
+import { NodeExecutor } from '../../../types'
 
 Handlebars.registerHelper('json', (context) => {
   const jsonString = JSON.stringify(context, null, 2)
@@ -10,7 +9,7 @@ Handlebars.registerHelper('json', (context) => {
 })
 
 type HttpRequestData = {
-  variableName?: string
+  name?: string
   endpoint?: string
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   body?: string
@@ -20,39 +19,33 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
   context,
   data,
   nodeId,
-  step,
-  publish,
 }) => {
-  await publish(
-    statusChannel().status({
-      nodeId,
-      status: 'loading',
-    })
-  )
+  publishStatus({
+    nodeId,
+    status: 'loading',
+  })
+
+  await new Promise((resolve) => setTimeout(resolve, 3_000))
 
   try {
-    const result = await step.run('http-request', async () => {
-      if (!data.endpoint || !data.variableName || !data.method) {
-        await publish(
-          statusChannel().status({
-            nodeId,
-            status: 'error',
-          })
-        )
+    const fn = async () => {
+      if (!data.endpoint || !data.name || !data.method) {
+        publishStatus({
+          nodeId,
+          status: 'error',
+        })
 
-        throw new NonRetriableError(
-          `HTTP Request node: No all infos configured`
-        )
+        throw new Error(`HTTP Request node: No all infos configured`)
       }
 
       const method = data.method
-      const endpoint = Handlebars.compile(data.endpoint)(context)
+      const endpoint = data.endpoint
 
       const options: KyOptions = { method }
 
       if (['POST', 'PUT', 'PATCH'].includes(method)) {
         if (data.body) {
-          const resolved = Handlebars.compile(data.body || '{}')(context)
+          const resolved = data.body || '{}'
           JSON.parse(resolved)
 
           options.body = resolved
@@ -78,25 +71,25 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
 
       return {
         ...context,
-        [data.variableName]: responsePayload,
+        [data.name]: responsePayload,
       }
+    }
+
+    publishStatus({
+      nodeId,
+      status: 'success',
     })
 
-    await publish(
-      statusChannel().status({
-        nodeId,
-        status: 'success',
-      })
-    )
+    const result = await fn()
 
     return result
   } catch (error) {
-    await publish(
-      statusChannel().status({
-        nodeId,
-        status: 'error',
-      })
-    )
+    console.log(error)
+
+    publishStatus({
+      nodeId,
+      status: 'error',
+    })
 
     throw error
   }

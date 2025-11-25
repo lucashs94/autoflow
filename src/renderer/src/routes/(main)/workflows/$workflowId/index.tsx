@@ -14,8 +14,6 @@ export const Route = createFileRoute('/(main)/workflows/$workflowId/')({
 function RouteComponent() {
   const { workflowId } = useParams({ from: '/(main)/workflows/$workflowId/' })
 
-  console.log(workflowId)
-
   return (
     <ErrorBoundary fallback={<EditorError />}>
       <Suspense fallback={<EditorLoading />}>

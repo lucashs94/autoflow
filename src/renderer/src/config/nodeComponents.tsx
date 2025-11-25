@@ -1,12 +1,16 @@
 import { InitialNode } from '@renderer/components/nodes/initialNode'
-import { HttpRequestNode } from '@renderer/features/nodes/httpRequest/node'
+import { TaskRegistry } from '@renderer/features/tasks/taskRegistry'
 import { NodeType } from '@renderer/types/nodes'
 import { NodeTypes } from '@xyflow/react'
 
+type nodeComponentsTypes = {
+  [K in NodeType]: NodeTypes[string]
+}
+
 export const nodeComponents = {
   [NodeType.INITIAL]: InitialNode,
-  // [NodeType.MANUAL_TRIGGER]: ManualTriggerNode,
-  [NodeType.HTTP_REQUEST]: HttpRequestNode,
-} as const satisfies NodeTypes
+  [NodeType.HTTP_REQUEST]: TaskRegistry.HTTP_REQUEST.node,
+  [NodeType.NAVIGATION]: TaskRegistry.NAVIGATION.node,
+} as const satisfies nodeComponentsTypes
 
 export type RegisteredNodeTypes = keyof typeof nodeComponents

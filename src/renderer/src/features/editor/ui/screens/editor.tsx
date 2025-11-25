@@ -69,7 +69,11 @@ export function Editor({ workflowId }: { workflowId: string }) {
         snapGrid={[10, 10]}
       >
         <Background />
-        <Controls />
+        <Controls
+          style={{
+            color: 'green',
+          }}
+        />
 
         <Panel position="top-left">
           {workflow ? <EditorHeaderName workflowId={workflow.id} /> : null}

@@ -1,11 +1,9 @@
-'use client'
-
 import { createId } from '@paralleldrive/cuid2'
 import { NodeType } from '@renderer/types/nodes'
+import { makeUniqueName } from '@renderer/utils/uniqueName'
 import { useReactFlow } from '@xyflow/react'
-import { GlobeIcon, MousePointerIcon } from 'lucide-react'
+import { ChromiumIcon, GlobeIcon } from 'lucide-react'
 import { useCallback } from 'react'
-import { toast } from 'sonner'
 import { Separator } from './ui/separator'
 import {
   Sheet,
@@ -24,12 +22,12 @@ export type NodeTypeOption = {
 }
 
 const triggerNodes: NodeTypeOption[] = [
-  {
-    type: NodeType.MANUAL_TRIGGER,
-    label: 'Manual Trigger',
-    description: 'Trigger the workflow manually clicking a button',
-    icon: MousePointerIcon,
-  },
+  // {
+  //   type: NodeType.INITIAL,
+  //   label: 'Manual Trigger',
+  //   description: 'Trigger the workflow manually clicking a button',
+  //   icon: MousePointerIcon,
+  // },
 ]
 
 const executionNodes: NodeTypeOption[] = [
@@ -38,6 +36,12 @@ const executionNodes: NodeTypeOption[] = [
     label: 'HTTP Request',
     description: 'Make an HTTP request',
     icon: GlobeIcon,
+  },
+  {
+    type: NodeType.NAVIGATION,
+    label: 'Navigate to URL',
+    description: 'Go to page based on URL',
+    icon: ChromiumIcon,
   },
 ]
 
@@ -56,38 +60,33 @@ export function NodeSelector({
 
   const handleNodeSelect = useCallback(
     (selection: NodeTypeOption) => {
-      if (selection.type === NodeType.MANUAL_TRIGGER) {
-        const nodes = getNodes()
-        const hasManualTrigger = nodes.some(
-          (node) => node.type === NodeType.MANUAL_TRIGGER
-        )
-        if (hasManualTrigger) {
-          toast.error('You can only have one manual trigger')
-          return
-        }
-      }
-
       setNodes((nodes) => {
-        const hasInitialTrigger = nodes.some(
-          (node) => node.type === NodeType.INITIAL
-        )
-
         const centerX = window.innerWidth / 2
         const centerY = window.innerHeight / 2
 
         const flowPosition = screenToFlowPosition({
-          x: centerX + (Math.random() - 0.5) * 200,
-          y: centerY + (Math.random() - 0.5) * 200,
+          x: centerX + (Math.random() - 0.5) * 800,
+          y: centerY + (Math.random() - 0.5) * 100,
         })
+
+        // --- geração de nome padrão único ---
+        const baseName = selection.label
+        const existingNames = new Set(
+          nodes.map((n) =>
+            typeof n.data?.name === 'string' ? n.data!.name : ''
+          )
+        )
+        const uniqueName = makeUniqueName(baseName, existingNames)
+        // --- fim: geração de nome padrão único ---
 
         const newNode = {
           id: createId(),
           type: selection.type,
           position: flowPosition,
-          data: {},
+          data: { name: uniqueName },
         }
 
-        if (hasInitialTrigger) return [newNode]
+        // if (hasInitialTrigger) return [newNode]
 
         return [...nodes, newNode]
       })
@@ -117,79 +116,86 @@ export function NodeSelector({
         </SheetHeader>
 
         <div>
-          {triggerNodes.map((nodeType) => {
-            const Icon = nodeType.icon
+          {triggerNodes.length > 0 && <p>Logic nodes</p>}
+          {triggerNodes.length > 0 &&
+            triggerNodes.map((nodeType) => {
+              const Icon = nodeType.icon
 
-            return (
-              <div
-                key={nodeType.type}
-                className="w-full justify-start h-auto py-2 px-4 rounded-none 
-                cursor-pointer border-l-2 border-transparent hover:border-l-primary"
-                onClick={() => handleNodeSelect(nodeType)}
-              >
-                <div className="flex items-center gap-6 w-full overflow-hidden">
-                  {typeof Icon === 'string' ? (
-                    <img
-                      src={Icon}
-                      alt={nodeType.label}
-                      className="size-5 object-contain rounded-sm"
-                    />
-                  ) : (
-                    <Icon className="size-5" />
-                  )}
+              return (
+                <div
+                  key={nodeType.type}
+                  className="w-full justify-start h-auto py-2 px-4 rounded-none 
+                             cursor-pointer border-l-2 border-transparent hover:border-l-primary"
+                  onClick={() => handleNodeSelect(nodeType)}
+                >
+                  <div className="flex items-center gap-6 w-full overflow-hidden">
+                    {typeof Icon === 'string' ? (
+                      <img
+                        src={Icon}
+                        alt={nodeType.label}
+                        className="size-5 object-contain rounded-sm"
+                      />
+                    ) : (
+                      <Icon className="size-5" />
+                    )}
 
-                  <div className="flex flex-col items-start text-left">
-                    <span className="font-medium text-sm">
-                      {nodeType.label}
-                    </span>
+                    <div className="flex flex-col items-start text-left">
+                      <span className="font-medium text-sm">
+                        {nodeType.label}
+                      </span>
 
-                    <span className="text-xs text-muted-foreground">
-                      {nodeType.description}
-                    </span>
+                      <span className="text-xs text-muted-foreground">
+                        {nodeType.description}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
         </div>
 
-        <Separator />
-
         <div>
-          {executionNodes.map((nodeType) => {
-            const Icon = nodeType.icon
+          <Separator />
 
-            return (
-              <div
-                key={nodeType.type}
-                className="w-full justify-start h-auto py-2 px-4 rounded-none 
-                cursor-pointer border-l-2 border-transparent hover:border-l-primary"
-                onClick={() => handleNodeSelect(nodeType)}
-              >
-                <div className="flex items-center gap-6 w-full overflow-hidden">
-                  {typeof Icon === 'string' ? (
-                    <img
-                      src={Icon}
-                      alt={nodeType.label}
-                      className="size-5 object-contain rounded-sm"
-                    />
-                  ) : (
-                    <Icon className="size-5" />
-                  )}
+          {executionNodes.length > 0 && (
+            <p className="mt-4 px-2">Web interactions nodes</p>
+          )}
 
-                  <div className="flex flex-col items-start text-left">
-                    <span className="font-medium text-sm">
-                      {nodeType.label}
-                    </span>
+          {executionNodes.length > 0 &&
+            executionNodes.map((nodeType) => {
+              const Icon = nodeType.icon
 
-                    <span className="text-xs text-muted-foreground">
-                      {nodeType.description}
-                    </span>
+              return (
+                <div
+                  key={nodeType.type}
+                  className="w-full justify-start h-auto py-2 px-4 rounded-none 
+                cursor-pointer border-l-2 border-transparent hover:border-l-primary mt-4"
+                  onClick={() => handleNodeSelect(nodeType)}
+                >
+                  <div className="flex items-center gap-6 w-full overflow-hidden">
+                    {typeof Icon === 'string' ? (
+                      <img
+                        src={Icon}
+                        alt={nodeType.label}
+                        className="size-5 object-contain rounded-sm"
+                      />
+                    ) : (
+                      <Icon className="size-5" />
+                    )}
+
+                    <div className="flex flex-col items-start text-left">
+                      <span className="font-medium text-sm">
+                        {nodeType.label}
+                      </span>
+
+                      <span className="text-xs text-muted-foreground">
+                        {nodeType.description}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
         </div>
       </SheetContent>
     </Sheet>

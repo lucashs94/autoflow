@@ -1,8 +1,8 @@
 export type WorkflowType = {
   id: string
   name: string
-  createdAt: string
-  updatedAt: string
+  createdAt: number
+  updatedAt: number
 }
 
 export type WorkflowReturnType = {
@@ -15,12 +15,11 @@ export type WorkflowReturnType = {
 export type NodeType = {
   id: string
   workflowId: string
-  name: string
   type: string
   position: string
   data: string
-  createdAt: string
-  updatedAt: string
+  createdAt: number
+  updatedAt: number
 }
 
 export type CreateNodeType = Omit<NodeType, 'createdAt' | 'updatedAt'>
@@ -32,8 +31,8 @@ export type EdgeType = {
   toNodeId: string
   fromOutput: string
   toInput: string
-  createdAt: string
-  updatedAt: string
+  createdAt: number
+  updatedAt: number
 }
 
 export type CreateEdgeType = Omit<EdgeType, 'createdAt' | 'updatedAt'>

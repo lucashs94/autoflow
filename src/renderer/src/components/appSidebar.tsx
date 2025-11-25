@@ -50,23 +50,31 @@ export function AppSidebar() {
     >
       <SidebarHeader>
         <SidebarMenuItem>
-          <SidebarMenuButton
+          {/* <SidebarMenuButton
             asChild
-            className="gap-x-4 h-10 px-4"
+            className="gap-x-4 h-12 px-4"
+          > */}
+          <Link
+            to={'/workflows'}
+            // className="text-green-300 border border-green-400/70 bg-green-900/60 hover:bg-green-900/40! backdrop-blur-sm"
+            className="flex items-center gap-x-3 h-12 px-4 group-data-[collapsible=icon]:h-8  group-data-[collapsible=icon]:px-0 text-green-300 group-data-[collapsible=icon]:justify-center"
           >
-            <Link to={'/workflows'}>
-              {/* <Image
-                src={'/logos/logo.svg'}
-                alt="Nodebase"
-                width={30}
-                height={30}
-              /> */}
+            <img
+              src={'/logo.png'}
+              alt="node"
+              width={60}
+              height={60}
+              className="size-12 shrink-0 object-contain drop-shadow-[0_0_4px_#00ff7f] animate-pulse"
+            />
 
-              <span className="font-semibold text-sm text-white!">
-                Automations
-              </span>
-            </Link>
-          </SidebarMenuButton>
+            <span
+              // className="font-semibold text-sm text-white!"
+              className="font-semibold text-sm text-white! group-data-[collapsible=icon]:hidden"
+            >
+              Web Automations
+            </span>
+          </Link>
+          {/* </SidebarMenuButton> */}
         </SidebarMenuItem>
       </SidebarHeader>
 

@@ -1,0 +1,41 @@
+import { getExecutor } from '@renderer/features/tasks/executorRegistry'
+import { NodeType } from '@renderer/types/nodes'
+import { topologicalSort } from '../utils/topologicalSort'
+
+export async function executeWorkflow(
+  workflowId: string
+): Promise<{ workflowId: string; context: Record<string, unknown> }> {
+  // Get nodes and edges
+  const workflow = await window.api.workflows.getOne(workflowId)
+
+  if (!workflow) {
+    throw new Error(`Workflow not found!`)
+  }
+
+  // TODO: Add Tipagem
+  const nodesWithoutInitial = workflow.nodes.filter(
+    (n) => n.type !== NodeType.INITIAL
+  )
+
+  // Define topological order
+  const sorted = topologicalSort(nodesWithoutInitial, workflow.edges)
+
+  // Initialize the Context
+  let context = {}
+
+  // Loop on each node and run the executor
+  for (const node of sorted) {
+    const executor = getExecutor(node.type as NodeType)
+
+    context = await executor({
+      data: node.data as Record<string, unknown>,
+      context,
+      nodeId: node.id,
+    })
+  }
+
+  return {
+    workflowId,
+    context,
+  }
+}

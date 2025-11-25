@@ -19,7 +19,7 @@ export function EntityList<T>({
   if (items.length === 0) {
     return (
       <div className="flex-1 flex justify-center items-center">
-        <div className="w-full max-w-md mx-auto border">
+        <div className="w-full max-w mx-auto border">
           {emptyView || <EmptyView />}
         </div>
       </div>

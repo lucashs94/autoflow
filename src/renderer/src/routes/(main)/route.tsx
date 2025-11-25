@@ -7,8 +7,17 @@ export const Route = createFileRoute('/(main)')({
 })
 
 function MainLayout() {
+  const cookies = document.cookie
+
+  const defaultOpen =
+    cookies
+      .split(';')
+      .find((cookie) => cookie.trim().startsWith('sidebar_state='))
+      ?.trim()
+      .split('=')[1] === 'true'
+
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar />
 
       <SidebarInset>

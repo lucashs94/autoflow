@@ -1,6 +1,4 @@
-'use client'
-
-import { NodeToolbar, Position } from '@xyflow/react'
+import { NodeToolbar, Position, useStore } from '@xyflow/react'
 import { SettingsIcon, TrashIcon } from 'lucide-react'
 import { Button } from '../ui/button'
 
@@ -21,6 +19,8 @@ export function WorkflowNode({
   name,
   description,
 }: WorkflowNodeProps) {
+  const zoom = useStore((s) => s.transform[2])
+
   return (
     <>
       {showToolbar && (
@@ -51,13 +51,21 @@ export function WorkflowNode({
           isVisible
           className="max-w-[200px] text-center"
         >
-          <p className="font-medium">{name}</p>
+          <div
+            style={{
+              transform: `scale(${zoom})`,
+              transformOrigin: 'top center',
+            }}
+            className="max-w-[100px]"
+          >
+            <p className="font-medium text-[8px]">{name}</p>
 
-          {description && (
-            <p className="text-muted-foreground truncate text-sm">
-              {description}
-            </p>
-          )}
+            {description && (
+              <p className="text-muted-foreground truncate text-[7px]">
+                {description}
+              </p>
+            )}
+          </div>
         </NodeToolbar>
       )}
     </>

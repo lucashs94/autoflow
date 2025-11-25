@@ -1,6 +1,5 @@
-'use client'
-
 import { zodResolver } from '@hookform/resolvers/zod'
+import { FieldEditChange } from '@renderer/components/fieldEditChange'
 import { Button } from '@renderer/components/ui/button'
 import {
   Dialog,
@@ -33,13 +32,13 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 const formSchema = z.object({
-  variableName: z
-    .string()
-    .min(1, 'Variable name is required')
-    .regex(
-      /^[A-Za-z_$][A-Za-z0-9_$]*$/,
-      'Variable name must start with letters or underscore and contain only letters, numbers and underscore'
-    ),
+  // name: z
+  //   .string()
+  //   .min(1, 'Name is required')
+  //   .regex(
+  //     /^[A-Za-z_$][A-Za-z0-9_$]*$/,
+  //     'Name must start with letters or underscore and contain only letters, numbers and underscore'
+  //   ),
   endpoint: z.string().min(1, { message: 'Please enter a valid URL' }),
   method: z.enum(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']),
   body: z.string().optional(),
@@ -48,6 +47,7 @@ const formSchema = z.object({
 export type HttpRequestFormValues = z.infer<typeof formSchema>
 
 interface Props {
+  nodeId: string
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (values: HttpRequestFormValues) => void
@@ -55,6 +55,7 @@ interface Props {
 }
 
 export const HttpRequestDialog = ({
+  nodeId,
   open,
   onOpenChange,
   onSubmit,
@@ -63,18 +64,18 @@ export const HttpRequestDialog = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      variableName: defaultValues.variableName || '',
       endpoint: defaultValues.endpoint || '',
       method: defaultValues.method || 'GET',
       body: defaultValues.body || '',
     },
   })
 
-  const watchVaribaleName = form.watch('variableName') || 'myApiCall'
   const watchMethod = form.watch('method')
   const isBodyRequired = ['POST', 'PUT', 'PATCH'].includes(watchMethod)
 
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
+    console.log('passsoiu')
+
     onSubmit(values)
     onOpenChange(false)
   }
@@ -82,7 +83,6 @@ export const HttpRequestDialog = ({
   useEffect(() => {
     if (open) {
       form.reset({
-        variableName: defaultValues.variableName || '',
         endpoint: defaultValues.endpoint || '',
         method: defaultValues.method || 'GET',
         body: defaultValues.body || '',
@@ -95,45 +95,23 @@ export const HttpRequestDialog = ({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent className="bg-muted">
+      <DialogContent className="bg-muted max-h-11/12 overflow-y-auto scrollbar">
         <DialogHeader>
-          <DialogTitle>HTTP Request</DialogTitle>
+          <DialogTitle>
+            {/* TODO: add suspense ou add loading state */}
+            <FieldEditChange id={nodeId} />
+          </DialogTitle>
 
           <DialogDescription>
-            Configure settings for the HTTP request node
+            Use this name to reference the result in other nodes:{' '}
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-8 mt-4"
+            className="space-y-8"
           >
-            <FormField
-              control={form.control}
-              name="variableName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Variable Name</FormLabel>
-
-                  <FormControl>
-                    <Input
-                      {...field}
-                      className="bg-input/90!"
-                      placeholder="myApiCall"
-                    />
-                  </FormControl>
-
-                  <FormDescription>
-                    Use this name to reference the result in other nodes:{' '}
-                    {`{{${watchVaribaleName}.httpResponse.data}}`}
-                  </FormDescription>
-
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="method"

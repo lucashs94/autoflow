@@ -23,19 +23,18 @@ db.exec(
     CREATE TABLE IF NOT EXISTS workflows (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      createdAt INTEGER NOT NULL,
+      updatedAt INTEGER NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS nodes (
       id TEXT PRIMARY KEY,
       workflowId TEXT NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
-      name TEXT NOT NULL,
       type TEXT NOT NULL DEFAULT 'INITIAL',
       position TEXT NOT NULL,
       data TEXT DEFAULT '{}',
-      createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      createdAt INTEGER NOT NULL,
+      updatedAt INTEGER NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS connections (
@@ -45,10 +44,8 @@ db.exec(
       toNodeId TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
       fromOutput TEXT NOT NULL DEFAULT 'main',
       toInput    TEXT NOT NULL DEFAULT 'main',
-      createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-      UNIQUE(fromNodeId, fromOutput, toNodeId, toInput)
+      createdAt INTEGER NOT NULL,
+      updatedAt INTEGER NOT NULL
     );
   `
 )
