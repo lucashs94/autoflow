@@ -21,6 +21,9 @@ declare global {
         getOne: (nodeId: string) => Promise<WorkflowReturnType>
         updateNodeName: (nodeId: string, name: string) => Promise<void>
       }
+      executions: {
+        navigateUrl: (url: string) => Promise<void>
+      }
     }
   }
 }
