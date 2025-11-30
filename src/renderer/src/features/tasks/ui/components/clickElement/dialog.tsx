@@ -97,6 +97,7 @@ export const SettingsDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Selector</FormLabel>
+                  {/* Add info tooltip */}
 
                   <FormControl>
                     <Input

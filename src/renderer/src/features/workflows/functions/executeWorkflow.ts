@@ -12,7 +12,7 @@ export async function executeWorkflow(
     throw new Error(`Workflow not found!`)
   }
 
-  // TODO: Add Tipagem
+  // TODO: Add Types
   const nodesWithoutInitial = workflow.nodes.filter(
     (n) => n.type !== NodeType.INITIAL
   )
@@ -22,6 +22,8 @@ export async function executeWorkflow(
 
   // Initialize the Context
   let context = {}
+
+  // IPC start flow
 
   // Loop on each node and run the executor
   for (const node of sorted) {
@@ -33,6 +35,8 @@ export async function executeWorkflow(
       nodeId: node.id,
     })
   }
+
+  // IPC finish flow
 
   return {
     workflowId,

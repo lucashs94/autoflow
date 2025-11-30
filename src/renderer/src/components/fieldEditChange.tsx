@@ -1,11 +1,8 @@
 import { CardTitle } from '@renderer/components/ui/card'
 import { Input } from '@renderer/components/ui/input'
-import {
-  useNode,
-  useUpdateNodeName,
-} from '@renderer/features/tasks/hooks/useNodes'
 import { makeUniqueName } from '@renderer/utils/uniqueName'
 import { useReactFlow } from '@xyflow/react'
+import { EditIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 type Props = {
@@ -15,20 +12,15 @@ type Props = {
 export function FieldEditChange({ id }: Props) {
   const { getNodes, setNodes } = useReactFlow()
   const nodes = getNodes()
+  const nodeFromReactFlow = nodes.find((n) => n.id === id)
+  const nodeName = nodeFromReactFlow?.data.name as string
 
-  const nameFromReactFlow = nodes.find((n) => n.id === id)?.data.name
-
-  const { data: node } = useNode(id)
-
-  const [name, setName] = useState(node?.data?.name ?? nameFromReactFlow ?? '')
+  const [name, setName] = useState(nodeName || '')
   const [isEditing, setIsEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const updateName = useUpdateNodeName()
 
   const handleSave = async () => {
-    if (!node) return
-
-    if (name === node.data.name) {
+    if (name === nodeName) {
       setIsEditing(false)
       return
     }
@@ -38,25 +30,12 @@ export function FieldEditChange({ id }: Props) {
     )
     const uniqueName = makeUniqueName(name, existingNames)
 
-    updateName.mutate(
-      { nodeId: node.id, name: uniqueName },
-      {
-        onSuccess: () => {
-          setName(name)
-
-          setNodes((prevNodes) => {
-            const updatedNode = node
-            updatedNode.data.name = name
-
-            return [...prevNodes, updatedNode]
-          })
-        },
-        onError: () => {
-          setName(node.data.name)
-        },
-      }
+    const updatedNodes = nodes.map((n) =>
+      n.id === id ? { ...n, data: { ...n.data, name: uniqueName } } : n
     )
 
+    setNodes(() => updatedNodes)
+    setName(uniqueName)
     setIsEditing(false)
   }
 
@@ -66,7 +45,7 @@ export function FieldEditChange({ id }: Props) {
     }
 
     if (e.key === 'Escape') {
-      setName(node.data.name)
+      setName(nodeName)
       setIsEditing(false)
     }
   }
@@ -78,15 +57,11 @@ export function FieldEditChange({ id }: Props) {
     }
   }, [isEditing])
 
-  useEffect(() => {
-    if (node) setName(node.data.name || '')
-  }, [node?.data.name])
-
   if (isEditing) {
     return (
       <Input
         ref={inputRef}
-        disabled={updateName.isPending}
+        // disabled={updateName.isPending}
         value={name}
         onChange={(e) => setName(e.target.value)}
         onKeyDown={handleKeyDown}
@@ -97,11 +72,14 @@ export function FieldEditChange({ id }: Props) {
   }
 
   return (
-    <CardTitle
-      className="cursor-pointer hover:text-foreground! hover:bg-input/90! leading-tight py-1 w-fit px-1 rounded-md"
-      onClick={() => setIsEditing(true)}
-    >
-      {name}
-    </CardTitle>
+    <div className=" flex gap-2 items-center">
+      <CardTitle
+        className="cursor-pointer hover:text-foreground! hover:bg-input/90! leading-tight py-1 w-fit px-1 rounded-md"
+        onClick={() => setIsEditing(true)}
+      >
+        {name}
+      </CardTitle>
+      <EditIcon className="size-4" />
+    </div>
   )
 }

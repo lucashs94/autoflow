@@ -2,7 +2,10 @@ import { ErrorView } from '@renderer/components/errorView'
 import { LoadingView } from '@renderer/components/loadingView'
 import { Button } from '@renderer/components/ui/button'
 import { nodeComponents } from '@renderer/config/nodeComponents'
-import { editorAtom } from '@renderer/features/editor/store/atom'
+import {
+  editorAtom,
+  workflowIdAtom,
+} from '@renderer/features/editor/store/atom'
 import { useWorkflow } from '@renderer/features/workflows/hooks/useWorkflows'
 import {
   addEdge,
@@ -29,11 +32,14 @@ import { SaveWorkflowBtn } from '../components/saveWorkflowBtn'
 
 export function Editor({ workflowId }: { workflowId: string }) {
   const setEditorInstance = useSetAtom(editorAtom)
+  const setWorkflowId = useSetAtom(workflowIdAtom)
 
   const { data: workflow } = useWorkflow(workflowId)
 
   const [nodes, setNodes] = useState<Node[]>(workflow?.nodes || [])
   const [edges, setEdges] = useState<Edge[]>(workflow?.edges || [])
+
+  if (workflow) setWorkflowId(workflow.id)
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) =>

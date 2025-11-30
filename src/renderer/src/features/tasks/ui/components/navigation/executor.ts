@@ -23,21 +23,26 @@ export const navigationExecutor: NodeExecutor<ExecutorDataProps> = async ({
   })
 
   try {
-    const result = (async () => {
-      // TODO: Execucao aqui
+    if (!data.url) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
 
-      return {
-        ...context,
-        // [data.name]: '',
-      }
-    })()
+      throw new Error(`Url not found`)
+    }
+
+    await window.api.executions.navigateUrl(data.url)
 
     publishStatus({
       nodeId,
       status: 'success',
     })
 
-    return result
+    return {
+      ...context,
+      [data.name!]: 'true',
+    }
   } catch (error) {
     publishStatus({
       nodeId,
