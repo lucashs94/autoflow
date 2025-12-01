@@ -14,6 +14,7 @@ export const nodeComponents = {
   [NodeType.WAIT_FOR_ELEMENT]: TaskRegistry.WAIT_FOR_ELEMENT.node,
   [NodeType.TYPE_TEXT]: TaskRegistry.TYPE_TEXT.node,
   [NodeType.CLICK_ELEMENT]: TaskRegistry.CLICK_ELEMENT.node,
+  [NodeType.WAIT_TIME]: TaskRegistry.WAIT_TIME.node,
 } as const satisfies nodeComponentsTypes
 
 export type RegisteredNodeTypes = keyof typeof nodeComponents

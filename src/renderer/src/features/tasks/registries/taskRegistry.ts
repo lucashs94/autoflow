@@ -4,6 +4,7 @@ import { httpRequestTask } from '../ui/components/httpRequest'
 import { navigationTask } from '../ui/components/navigation'
 import { typeTextTask } from '../ui/components/typeText'
 import { waitForElementTask } from '../ui/components/waitForElement'
+import { waitTimeTask } from '../ui/components/waitTime'
 
 export const TaskRegistry = {
   [NodeType.HTTP_REQUEST]: httpRequestTask,
@@ -11,4 +12,5 @@ export const TaskRegistry = {
   [NodeType.WAIT_FOR_ELEMENT]: waitForElementTask,
   [NodeType.TYPE_TEXT]: typeTextTask,
   [NodeType.CLICK_ELEMENT]: clickElementTask,
+  [NodeType.WAIT_TIME]: waitTimeTask,
 }

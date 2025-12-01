@@ -7,6 +7,7 @@ import {
   GlobeIcon,
   HourglassIcon,
   MousePointerIcon,
+  TimerResetIcon,
   TypeIcon,
 } from 'lucide-react'
 import { useCallback } from 'react'
@@ -48,6 +49,12 @@ const navigationNodes: NodeTypeOption[] = [
     label: 'Wait for Element',
     description: 'Wait for element to be visible or hidden',
     icon: HourglassIcon,
+  },
+  {
+    type: NodeType.WAIT_TIME,
+    label: 'Wait Time',
+    description: 'Wait for a specified time',
+    icon: TimerResetIcon,
   },
 ]
 

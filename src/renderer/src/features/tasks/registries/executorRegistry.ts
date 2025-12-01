@@ -8,6 +8,7 @@ export const executorRegistry: Partial<Record<NodeType, NodeExecutor>> = {
   [NodeType.WAIT_FOR_ELEMENT]: TaskRegistry.WAIT_FOR_ELEMENT.executor,
   [NodeType.TYPE_TEXT]: TaskRegistry.TYPE_TEXT.executor,
   [NodeType.CLICK_ELEMENT]: TaskRegistry.CLICK_ELEMENT.executor,
+  [NodeType.WAIT_TIME]: TaskRegistry.WAIT_TIME.executor,
 }
 
 export const getExecutor = (type: NodeType): NodeExecutor => {
