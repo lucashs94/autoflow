@@ -34,6 +34,8 @@ export class BrowserController {
 
     this.browser = await Puppeteer.launch({
       headless: false,
+      defaultViewport: null,
+      args: ['--start-maximized'],
     })
 
     const pages = await this.browser.pages()
@@ -64,7 +66,7 @@ export class BrowserController {
     if (this.shouldStop) return
 
     if (!this.page || !this.browser || !this.abortController) {
-      throw new Error(`Browser not found`)
+      throw new Error(`Browser or page not found`)
     }
 
     await this.page.goto(url, {
@@ -72,8 +74,6 @@ export class BrowserController {
       waitUntil: 'networkidle2',
       timeout,
     })
-
-    await new Promise((resolve) => setTimeout(resolve, 3000))
   }
 
   async waitForElement({
@@ -109,64 +109,26 @@ export class BrowserController {
   }
 
   async waitAndType({
-    description = '',
     selector,
     text,
-    timeout = 30_000,
   }: {
-    description?: string
     selector: string
     text: string
-    timeout?: number
   }): Promise<void> {
-    if (!this.page || !this.browser)
+    if (!this.page || !this.browser || !this.abortController)
       throw new Error(`Browser or page not found`)
 
-    try {
-      await this.page.waitForSelector(selector, {
-        timeout,
-        signal: this.abortController?.signal ?? undefined,
-      })
-
-      await this.page.type(selector, text)
-    } catch (error) {
-      if (error instanceof TimeoutError) {
-        throw new Error(
-          `Timeout de ${timeout}ms atingido ao tentar executar: "${description}" no seletor "${selector}"`
-        )
-      }
-
-      throw error
-    }
+    await this.page
+      .locator(selector)
+      .fill(text, { signal: this.abortController.signal })
   }
 
-  async waitAndClick({
-    description = '',
-    selector,
-    timeout = 30_000,
-  }: {
-    description?: string
-    selector: string
-    timeout?: number
-  }): Promise<void> {
-    if (!this.page || !this.browser)
+  async waitAndClick({ selector }: { selector: string }): Promise<void> {
+    if (!this.page || !this.browser || !this.abortController)
       throw new Error(`Browser or page not found`)
 
-    try {
-      await this.page.waitForSelector(selector, {
-        timeout,
-        signal: this.abortController?.signal || undefined,
-      })
-
-      await this.page.click(selector)
-    } catch (error) {
-      if (error instanceof TimeoutError) {
-        throw new Error(
-          `Timeout de ${timeout}ms atingido ao tentar executar: "${description}" no seletor "${selector}"`
-        )
-      }
-
-      throw error
-    }
+    await this.page
+      .locator(selector)
+      .click({ signal: this.abortController.signal })
   }
 }
