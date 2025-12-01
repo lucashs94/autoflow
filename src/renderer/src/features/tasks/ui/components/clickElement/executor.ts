@@ -24,21 +24,26 @@ export const clickElementExecutor: NodeExecutor<ExecutorDataProps> = async ({
   })
 
   try {
-    const result = (async () => {
-      // TODO: Execucao aqui
+    if (!data.selector) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
 
-      return {
-        ...context,
-        // [data.name]: '',
-      }
-    })()
+      throw new Error(`Selector not found`)
+    }
+
+    await window.api.executions.clickElement(data.selector)
 
     publishStatus({
       nodeId,
       status: 'success',
     })
 
-    return result
+    return {
+      ...context,
+      [data.name!]: 'true',
+    }
   } catch (error) {
     publishStatus({
       nodeId,

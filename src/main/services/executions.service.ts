@@ -12,12 +12,20 @@ export async function navigateUrlService(url) {
   }
 }
 
-export function typeTextService(selector: string, text: string) {
-  // Verifica se tem page ativa
-  // Find element and type
+export async function typeTextService(selector: string, text: string) {
+  try {
+    await instance.waitAndType({ selector, text })
+  } catch (error) {
+    console.log(error)
+    throw error
+  }
 }
 
-export function clickElementService(selector) {
-  // Verifica se tem page ativa
-  // Find element and click
+export async function clickElementService(selector: string) {
+  try {
+    await instance.waitAndClick({ selector })
+  } catch (error) {
+    console.log(error)
+    throw error
+  }
 }

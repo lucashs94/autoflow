@@ -23,6 +23,8 @@ declare global {
       }
       executions: {
         navigateUrl: (url: string) => Promise<void>
+        typeText: (selector: string, text: string) => Promise<void>
+        clickElement: (selector: string) => Promise<void>
       }
     }
   }

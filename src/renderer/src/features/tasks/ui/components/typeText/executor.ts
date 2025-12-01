@@ -24,21 +24,26 @@ export const typeTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
   })
 
   try {
-    const result = (async () => {
-      // TODO: Execucao aqui
+    if (!data.selector || !data.text) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
 
-      return {
-        ...context,
-        // [data.name]: '',
-      }
-    })()
+      throw new Error(`Selector or text not found`)
+    }
+
+    await window.api.executions.typeText(data.selector, data.text)
 
     publishStatus({
       nodeId,
       status: 'success',
     })
 
-    return result
+    return {
+      ...context,
+      [data.name!]: 'true',
+    }
   } catch (error) {
     publishStatus({
       nodeId,
