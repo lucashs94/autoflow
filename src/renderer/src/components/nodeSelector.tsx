@@ -3,6 +3,7 @@ import { NodeType } from '@renderer/types/nodes'
 import { makeUniqueName } from '@renderer/utils/uniqueName'
 import { useReactFlow } from '@xyflow/react'
 import {
+  BracesIcon,
   ChromiumIcon,
   GlobeIcon,
   HourglassIcon,
@@ -58,7 +59,7 @@ const navigationNodes: NodeTypeOption[] = [
   },
 ]
 
-const executionNodes: NodeTypeOption[] = [
+const interactionsNodes: NodeTypeOption[] = [
   {
     type: NodeType.TYPE_TEXT,
     label: 'Type Text',
@@ -70,6 +71,15 @@ const executionNodes: NodeTypeOption[] = [
     label: 'Click Element',
     description: 'Click on an element',
     icon: MousePointerIcon,
+  },
+]
+
+const contextNodes: NodeTypeOption[] = [
+  {
+    type: NodeType.SET_VARIABLES,
+    label: 'Set Variables',
+    description: 'Set variables in the flow',
+    icon: BracesIcon,
   },
 ]
 
@@ -190,12 +200,56 @@ export function NodeSelector({
         <div>
           <Separator />
 
-          {executionNodes.length > 0 && (
+          {contextNodes.length > 0 && (
+            <p className="mt-4 px-2  text-primary">Context</p>
+          )}
+
+          {contextNodes.length > 0 &&
+            contextNodes.map((nodeType) => {
+              const Icon = nodeType.icon
+
+              return (
+                <div
+                  key={nodeType.type}
+                  className="w-full justify-start h-auto py-2 px-4 rounded-none 
+                cursor-pointer border-l-2 border-transparent hover:border-l-primary mt-4"
+                  onClick={() => handleNodeSelect(nodeType)}
+                >
+                  <div className="flex items-center gap-6 w-full overflow-hidden">
+                    {typeof Icon === 'string' ? (
+                      <img
+                        src={Icon}
+                        alt={nodeType.label}
+                        className="size-5 object-contain rounded-sm"
+                      />
+                    ) : (
+                      <Icon className="size-5" />
+                    )}
+
+                    <div className="flex flex-col items-start text-left">
+                      <span className="font-medium text-sm">
+                        {nodeType.label}
+                      </span>
+
+                      <span className="text-xs text-muted-foreground">
+                        {nodeType.description}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+        </div>
+
+        <div>
+          <Separator />
+
+          {interactionsNodes.length > 0 && (
             <p className="mt-4 px-2  text-primary">Web interactions</p>
           )}
 
-          {executionNodes.length > 0 &&
-            executionNodes.map((nodeType) => {
+          {interactionsNodes.length > 0 &&
+            interactionsNodes.map((nodeType) => {
               const Icon = nodeType.icon
 
               return (
