@@ -29,6 +29,11 @@ import { AddNodeBtn } from '../components/addNodeBtn'
 import { EditorHeaderName } from '../components/editorHeaderName'
 import { ExecuteWorkflowBtn } from '../components/executeWorkflowBtn'
 import { SaveWorkflowBtn } from '../components/saveWorkflowBtn'
+import { DeletableEdge } from '@renderer/components/edges/deletableEdge'
+
+const edgeTypes = {
+  default: DeletableEdge,
+}
 
 export function Editor({ workflowId }: { workflowId: string }) {
   const setEditorInstance = useSetAtom(editorAtom)
@@ -63,6 +68,7 @@ export function Editor({ workflowId }: { workflowId: string }) {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeComponents}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}

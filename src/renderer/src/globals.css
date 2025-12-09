@@ -270,3 +270,7 @@ body {
     background-color: theme(--color-muted);
   }
 }
+
+@keyframes edge-dash {
+  from { stroke-dashoffset: 200 }
+}
