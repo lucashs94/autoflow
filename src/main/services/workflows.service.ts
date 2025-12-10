@@ -10,7 +10,7 @@ import {
 } from '../db/workflows'
 
 export function getWorkflowsService() {
-  return getWorkflows()
+  return getWorkflows().sort((a, b) => b.createdAt - a.createdAt)
 }
 
 export function getWorkflowService(workflowId: string) {
