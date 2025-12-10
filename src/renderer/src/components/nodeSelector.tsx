@@ -145,7 +145,7 @@ export function NodeSelector({
         side="right"
         className="w-full md:max-w-md overflow-y-auto bg-muted!"
       >
-        <SheetHeader>
+        <SheetHeader className='pb-0'>
           <SheetTitle className="text-xl">Select a node</SheetTitle>
 
           <SheetDescription>
@@ -157,7 +157,7 @@ export function NodeSelector({
           <Separator />
 
           {navigationNodes.length > 0 && (
-            <p className="mt-4 px-2 text-primary">Navigation</p>
+            <p className="mt-2 px-2 text-primary">Navigation</p>
           )}
 
           {navigationNodes.length > 0 &&
@@ -168,7 +168,7 @@ export function NodeSelector({
                 <div
                   key={nodeType.type}
                   className="w-full justify-start h-auto py-2 px-4 rounded-none 
-                cursor-pointer border-l-2 border-transparent hover:border-l-primary mt-4"
+                cursor-pointer border-l-2 border-transparent hover:border-l-primary mt-2"
                   onClick={() => handleNodeSelect(nodeType)}
                 >
                   <div className="flex items-center gap-6 w-full overflow-hidden">
@@ -201,7 +201,7 @@ export function NodeSelector({
           <Separator />
 
           {contextNodes.length > 0 && (
-            <p className="mt-4 px-2  text-primary">Context</p>
+            <p className="mt-2 px-2  text-primary">Context</p>
           )}
 
           {contextNodes.length > 0 &&
@@ -212,7 +212,7 @@ export function NodeSelector({
                 <div
                   key={nodeType.type}
                   className="w-full justify-start h-auto py-2 px-4 rounded-none 
-                cursor-pointer border-l-2 border-transparent hover:border-l-primary mt-4"
+                cursor-pointer border-l-2 border-transparent hover:border-l-primary mt-2"
                   onClick={() => handleNodeSelect(nodeType)}
                 >
                   <div className="flex items-center gap-6 w-full overflow-hidden">
@@ -245,7 +245,7 @@ export function NodeSelector({
           <Separator />
 
           {interactionsNodes.length > 0 && (
-            <p className="mt-4 px-2  text-primary">Web interactions</p>
+            <p className="mt-2 px-2  text-primary">Web interactions</p>
           )}
 
           {interactionsNodes.length > 0 &&
@@ -256,7 +256,7 @@ export function NodeSelector({
                 <div
                   key={nodeType.type}
                   className="w-full justify-start h-auto py-2 px-4 rounded-none 
-                cursor-pointer border-l-2 border-transparent hover:border-l-primary mt-4"
+                cursor-pointer border-l-2 border-transparent hover:border-l-primary mt-2"
                   onClick={() => handleNodeSelect(nodeType)}
                 >
                   <div className="flex items-center gap-6 w-full overflow-hidden">
@@ -289,7 +289,7 @@ export function NodeSelector({
           <Separator />
 
           {integrationNodes.length > 0 && (
-            <p className="mt-4 px-2 text-primary">Integration</p>
+            <p className="mt-2 px-2 text-primary">Integration</p>
           )}
 
           {integrationNodes.length > 0 &&
@@ -300,7 +300,7 @@ export function NodeSelector({
                 <div
                   key={nodeType.type}
                   className="w-full justify-start h-auto py-2 px-4 rounded-none 
-                cursor-pointer border-l-2 border-transparent hover:border-l-primary mt-4"
+                cursor-pointer border-l-2 border-transparent hover:border-l-primary mt-2"
                   onClick={() => handleNodeSelect(nodeType)}
                 >
                   <div className="flex items-center gap-6 w-full overflow-hidden">
