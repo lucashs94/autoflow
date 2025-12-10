@@ -11,6 +11,7 @@ type ExecutorDataProps = {
   name?: string
   selector?: string
   shouldBe?: 'visible' | 'hidden'
+  timeout?: number
 }
 
 export const waitForElementNodeExecutor: NodeExecutor<
@@ -22,21 +23,21 @@ export const waitForElementNodeExecutor: NodeExecutor<
   })
 
   try {
-    const result = (async () => {
-      // TODO: Execucao aqui
-
-      return {
-        ...context,
-        // [data.name]: '',
-      }
-    })()
+    await window.api.executions.waitForElement(
+      data.selector!,
+      data.shouldBe!,
+      data.timeout! * 1000
+    )
 
     publishStatus({
       nodeId,
       status: 'success',
     })
 
-    return result
+    return {
+      ...context,
+      [data.name!]: true,
+    }
   } catch (error) {
     publishStatus({
       nodeId,

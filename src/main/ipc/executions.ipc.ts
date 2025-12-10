@@ -3,6 +3,7 @@ import {
   clickElementService,
   navigateUrlService,
   typeTextService,
+  waitForElementService,
 } from '../services/executions.service'
 
 ipcMain.handle('execution:navigateUrl', async (_, url: string) =>
@@ -17,4 +18,10 @@ ipcMain.handle(
 ipcMain.handle(
   'execution:clickElement',
   async (_, selector: string) => await clickElementService(selector)
+)
+
+ipcMain.handle(
+  'execution:waitForElement',
+  async (_, selector: string, shouldBe: 'visible' | 'hidden', timeout?: number) =>
+    await waitForElementService(selector, shouldBe, timeout)
 )

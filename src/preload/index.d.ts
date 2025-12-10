@@ -25,6 +25,7 @@ declare global {
         navigateUrl: (url: string) => Promise<void>
         typeText: (selector: string, text: string) => Promise<void>
         clickElement: (selector: string) => Promise<void>
+        waitForElement: (selector: string, shouldBe: 'visible' | 'hidden', timeout?: number) => Promise<void>
       }
     }
   }

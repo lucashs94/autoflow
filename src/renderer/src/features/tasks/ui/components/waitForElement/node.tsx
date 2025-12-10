@@ -13,6 +13,7 @@ type NodeProps = {
   name: string
   selector?: string
   shouldBe?: 'visible' | 'hidden'
+  timeout?: number
 }
 
 type NodeType = Node<NodeProps>

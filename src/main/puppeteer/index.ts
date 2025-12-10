@@ -77,12 +77,10 @@ export class BrowserController {
   }
 
   async waitForElement({
-    description = '',
     selector,
     timeout = 30_000,
     shouldBe,
   }: {
-    description?: string
     selector: string
     timeout?: number
     shouldBe: 'visible' | 'hidden'
@@ -90,22 +88,12 @@ export class BrowserController {
     if (!this.page || !this.browser)
       throw new Error(`Browser or page not found`)
 
-    try {
-      await this.page.waitForSelector(selector, {
-        timeout,
-        signal: this.abortController?.signal,
-        visible: shouldBe === 'visible' ? true : false,
-        hidden: shouldBe === 'hidden' ? true : false,
-      })
-    } catch (error) {
-      if (error instanceof TimeoutError) {
-        throw new Error(
-          `Timeout de ${timeout}ms atingido ao tentar executar: "${description}" no seletor "${selector}"`
-        )
-      }
-
-      throw error
-    }
+    await this.page.waitForSelector(selector, {
+      timeout,
+      signal: this.abortController?.signal,
+      visible: shouldBe === 'visible' ? true : false,
+      hidden: shouldBe === 'hidden' ? true : false,
+    })
   }
 
   async waitAndType({
