@@ -1,3 +1,4 @@
+import { DeletableEdge } from '@renderer/components/edges/deletableEdge'
 import { ErrorView } from '@renderer/components/errorView'
 import { LoadingView } from '@renderer/components/loadingView'
 import { Button } from '@renderer/components/ui/button'
@@ -16,6 +17,7 @@ import {
   Controls,
   Edge,
   EdgeChange,
+  getOutgoers,
   Node,
   NodeChange,
   Panel,
@@ -29,7 +31,6 @@ import { AddNodeBtn } from '../components/addNodeBtn'
 import { EditorHeaderName } from '../components/editorHeaderName'
 import { ExecuteWorkflowBtn } from '../components/executeWorkflowBtn'
 import { SaveWorkflowBtn } from '../components/saveWorkflowBtn'
-import { DeletableEdge } from '@renderer/components/edges/deletableEdge'
 
 const edgeTypes = {
   default: DeletableEdge,
@@ -62,6 +63,32 @@ export function Editor({ workflowId }: { workflowId: string }) {
     []
   )
 
+  const isValidConnection = useCallback(
+    (connection: Edge | Connection) => {
+      // self connect
+      if (connection.source === connection.target) return false
+
+      const source = nodes.find((node) => node.id === connection.source)
+      const target = nodes.find((node) => node.id === connection.target)
+
+      if (!source || !target) return false
+
+      const hasCycle = (node: Node, visited = new Set()) => {
+        if (visited.has(node.id)) return false
+        visited.add(node.id)
+
+        for (const outgoer of getOutgoers(node, nodes, edges)) {
+          if (outgoer.id === connection.source) return true
+          if (hasCycle(outgoer, visited)) return true
+        }
+      }
+      const detectedCycle = hasCycle(target)
+
+      return !detectedCycle
+    },
+    [nodes, edges]
+  )
+
   return (
     <div className="size-full bg-muted">
       <ReactFlow
@@ -72,6 +99,7 @@ export function Editor({ workflowId }: { workflowId: string }) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        isValidConnection={isValidConnection}
         onInit={setEditorInstance}
         fitView
         proOptions={{

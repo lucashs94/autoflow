@@ -13,12 +13,12 @@ export async function executeWorkflow(
   }
 
   // TODO: Add Types
-  const nodesWithoutInitial = workflow.nodes.filter(
-    (n) => n.type !== NodeType.INITIAL
-  )
+  // const nodesWithoutInitial = workflow.nodes.filter(
+  //   (n) => n.type !== NodeType.INITIAL
+  // )
 
   // Define topological order
-  const sorted = topologicalSort(nodesWithoutInitial, workflow.edges)
+  const sorted = topologicalSort(workflow.nodes, workflow.edges)
 
   // Initialize the Context
   let context = {}
@@ -27,6 +27,8 @@ export async function executeWorkflow(
 
   // Loop on each node and run the executor
   for (const node of sorted) {
+    if (node.type === NodeType.INITIAL) continue
+
     const executor = getExecutor(node.type as NodeType)
 
     context = await executor({
@@ -34,6 +36,8 @@ export async function executeWorkflow(
       context,
       nodeId: node.id,
     })
+
+    console.log(context)
   }
 
   // IPC finish flow

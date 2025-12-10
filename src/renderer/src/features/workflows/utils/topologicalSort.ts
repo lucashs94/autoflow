@@ -1,45 +1,56 @@
-import { Edge, Node } from '@xyflow/react'
-import toposort from 'toposort'
+import { NodeType } from '@renderer/types/nodes'
+import { Edge, getIncomers, Node } from '@xyflow/react'
 
 export function topologicalSort(nodes: Node[], connections: Edge[]): Node[] {
   // No connections, independent nodes
   if (connections.length === 0) return nodes
 
-  // edges array for toposort
-  const edges: [string, string][] = connections.map((conn) => [
-    conn.source,
-    conn.target,
-  ])
-
-  // Add nodes with no connections as self-edges to ensure they are included
-  const connectedNodeIds = new Set<string>()
-  for (const conn of connections) {
-    connectedNodeIds.add(conn.source)
-    connectedNodeIds.add(conn.target)
+  // Seleciona o node inicial
+  const initialNode = nodes.find((n) => n.type === NodeType.INITIAL)
+  if (!initialNode) {
+    throw new Error('Workflow must have an initial node')
   }
 
-  for (const node of nodes) {
-    if (!connectedNodeIds.has(node.id)) {
-      edges.push([node.id, node.id])
+  const reachable = new Set<string>()
+  const stack = [initialNode.id]
+
+  while (stack.length > 0) {
+    const cur = stack.pop()!
+    if (reachable.has(cur)) continue
+    reachable.add(cur)
+
+    for (const c of connections) {
+      if (c.source === cur && !reachable.has(c.target)) {
+        stack.push(c.target)
+      }
     }
   }
 
-  // Perform topological sort
-  let sortedNodeIds: string[]
-  try {
-    sortedNodeIds = toposort(edges)
+  const queue: Node[] = [initialNode]
+  const planned = new Set<string>()
+  planned.add(initialNode.id)
 
-    // remove duplicates
-    sortedNodeIds = [...new Set(sortedNodeIds)]
-  } catch (err) {
-    if (err instanceof Error && err.message.includes('Cyclic')) {
-      throw new Error('Workflow contains a cycle')
+  while (true) {
+    let added = false
+
+    for (const currentNode of nodes) {
+      if (planned.has(currentNode.id)) continue
+      if (!reachable.has(currentNode.id)) continue
+
+      const incomers = getIncomers(currentNode, nodes, connections).filter(
+        (i) => reachable.has(i.id)
+      )
+      if (incomers.length === 0) continue
+
+      if (!incomers.every((i) => planned.has(i.id))) continue
+
+      queue.push(currentNode)
+      planned.add(currentNode.id)
+      added = true
     }
 
-    throw err
+    if (!added) break
   }
 
-  // Map sorted IDs back to node objects
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]))
-  return sortedNodeIds.map((id) => nodeMap.get(id)!).filter(Boolean)
+  return queue
 }
