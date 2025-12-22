@@ -18,7 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@renderer/components/ui/form'
-import { Input } from '@renderer/components/ui/input'
+import { Slider } from '@renderer/components/ui/slider'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -50,7 +50,7 @@ export const SettingsDialog = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      time: Number(defaultValues.time) || 0,
+      time: Number(defaultValues.time) || 1,
     },
   })
 
@@ -62,7 +62,7 @@ export const SettingsDialog = ({
   useEffect(() => {
     if (open) {
       form.reset({
-        time: Number(defaultValues.time) || 0,
+        time: Number(defaultValues.time) || 1,
       })
     }
   }, [open, defaultValues, form])
@@ -86,26 +86,34 @@ export const SettingsDialog = ({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-8"
+            className="space-y-8 mt-2"
           >
             <FormField
               control={form.control}
               name="time"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Wait Time (seconds)</FormLabel>
+                  <div className="flex justify-between mb-2">
+                    <FormLabel>Wait Time (seconds)</FormLabel>
+
+                    <span className="text-sm">{form.watch('time')}</span>
+                  </div>
 
                   <FormControl>
-                    <Input
+                    <Slider
                       {...field}
-                      className="bg-input/90!"
-                      placeholder="30"
-                      type="number"
+                      min={1}
+                      max={60}
+                      step={1}
+                      value={[field.value || 1]}
+                      onValueChange={(value) => field.onChange(value[0])}
                     />
                   </FormControl>
-                  <FormMessage />
 
-                  <FormDescription>min: 1s | max: 60s</FormDescription>
+                  <FormDescription className="text-xs mt-2">
+                    min: 1s | max: 60s
+                  </FormDescription>
+                  <FormMessage />
                 </FormItem>
               )}
             />
