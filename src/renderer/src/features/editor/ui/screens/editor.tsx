@@ -7,7 +7,10 @@ import {
   editorAtom,
   workflowIdAtom,
 } from '@renderer/features/editor/store/atom'
-import { useWorkflow } from '@renderer/features/workflows/hooks/useWorkflows'
+import {
+  useUpdateWorkflow,
+  useWorkflow,
+} from '@renderer/features/workflows/hooks/useWorkflows'
 import {
   addEdge,
   applyEdgeChanges,
@@ -39,6 +42,7 @@ const edgeTypes = {
 export function Editor({ workflowId }: { workflowId: string }) {
   const setEditorInstance = useSetAtom(editorAtom)
   const setWorkflowId = useSetAtom(workflowIdAtom)
+  const saveWorkflow = useUpdateWorkflow()
 
   const { data: workflow } = useWorkflow(workflowId)
 
@@ -89,8 +93,27 @@ export function Editor({ workflowId }: { workflowId: string }) {
     [nodes, edges]
   )
 
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const isSave = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'
+
+    if (!isSave) return
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    saveWorkflow.mutate({
+      workflowId,
+      nodes,
+      edges,
+    })
+  }
+
   return (
-    <div className="size-full bg-muted">
+    <div
+      className="size-full bg-muted"
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
