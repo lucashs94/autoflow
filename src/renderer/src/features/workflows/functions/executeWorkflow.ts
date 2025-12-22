@@ -12,13 +12,18 @@ export async function executeWorkflow(
     throw new Error(`Workflow not found!`)
   }
 
+  const initialNode = workflow.nodes.find((n) => n.type === NodeType.INITIAL)
+
+  if (!initialNode) {
+    throw new Error(`Workflow must have an initial node!`)
+  }
+
   // TODO: Add Types
-  // const nodesWithoutInitial = workflow.nodes.filter(
-  //   (n) => n.type !== NodeType.INITIAL
-  // )
 
   // Define topological order
-  const sorted = topologicalSort(workflow.nodes, workflow.edges)
+  const sorted = topologicalSort(workflow.nodes, workflow.edges, initialNode)
+
+  console.log(sorted)
 
   // Initialize the Context
   let context = {}
@@ -35,6 +40,7 @@ export async function executeWorkflow(
       data: node.data as Record<string, unknown>,
       context,
       nodeId: node.id,
+      workflowId,
     })
 
     console.log(context)
