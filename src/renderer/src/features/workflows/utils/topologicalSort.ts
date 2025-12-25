@@ -83,7 +83,7 @@ export function topologicalSort(
         })
 
       if (incomers.length === 0) continue
-      // if (!incomers.every((i) => planned.has(i.id))) continue
+
       const allPrereqsPlanned = incomers.every((i) => planned.has(i.id))
       const somePrereqPlanned = incomers.some((i) => planned.has(i.id))
       const canSchedule =
