@@ -41,6 +41,15 @@ export function topologicalSort(
       }
 
       if (c.source === cur && !reachable.has(c.target)) {
+        // Ignora a aresta vinda de um nó interno que volta para o target do nó LOOP (apenas visual)
+        if (
+          rootNode.type === NodeType.LOOP &&
+          cur !== rootNode.id &&
+          c.target === rootNode.id
+        ) {
+          continue
+        }
+
         stack.push(c.target)
       }
     }
@@ -74,7 +83,15 @@ export function topologicalSort(
         })
 
       if (incomers.length === 0) continue
-      if (!incomers.every((i) => planned.has(i.id))) continue
+      // if (!incomers.every((i) => planned.has(i.id))) continue
+      const allPrereqsPlanned = incomers.every((i) => planned.has(i.id))
+      const somePrereqPlanned = incomers.some((i) => planned.has(i.id))
+      const canSchedule =
+        currentNode.type === NodeType.LOOP && rootNode.type !== NodeType.LOOP
+          ? somePrereqPlanned
+          : allPrereqsPlanned
+
+      if (!canSchedule) continue
 
       queue.push(currentNode)
       planned.add(currentNode.id)
