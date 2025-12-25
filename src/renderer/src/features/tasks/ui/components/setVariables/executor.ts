@@ -1,5 +1,6 @@
 import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
+import { verifyMinimunNodeExecutionTime } from '@renderer/utils/minNodeExecutionTime'
 import Handlebars from 'handlebars'
 
 Handlebars.registerHelper('json', (context) => {
@@ -17,6 +18,8 @@ export const setVariableNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
   data,
   nodeId,
 }) => {
+  const start = performance.now()
+
   publishStatus({
     nodeId,
     status: 'loading',
@@ -33,6 +36,8 @@ export const setVariableNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
     }
 
     const variables = JSON.parse(data.variables)
+
+    await verifyMinimunNodeExecutionTime(start)
 
     publishStatus({
       nodeId,
