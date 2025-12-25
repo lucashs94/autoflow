@@ -1,5 +1,3 @@
-'use client'
-
 import { WorkflowNode } from '@renderer/components/nodes/workflowNode'
 import { BaseHandle } from '@renderer/components/reactFlow/base-handle'
 import {
@@ -85,6 +83,7 @@ export const BaseExecutionNode = memo(
                 type="target"
                 position={Position.Left}
               />
+
               <BaseHandle
                 id={`source-1`}
                 type="source"
