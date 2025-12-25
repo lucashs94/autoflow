@@ -1,21 +1,36 @@
-import { TaskRegistry } from '@renderer/features/tasks/registries/taskRegistry'
 import { NodeType } from '@renderer/types/nodes'
 import { NodeExecutor } from '../types/types'
+import { clickElementExecutor } from '../ui/components/clickElement/executor'
+import { httpRequestExecutor } from '../ui/components/httpRequest/executor'
+import { loopNodeExecutor } from '../ui/components/loop/executor'
+import { navigationExecutor } from '../ui/components/navigation/executor'
+import { setVariableNodeExecutor } from '../ui/components/setVariables/executor'
+import { typeTextExecutor } from '../ui/components/typeText/executor'
+import { waitForElementNodeExecutor } from '../ui/components/waitForElement/executor'
+import { waitTimeNodeExecutor } from '../ui/components/waitTime/executor'
 
-export const executorRegistry: Partial<Record<NodeType, NodeExecutor>> = {
-  [NodeType.HTTP_REQUEST]: TaskRegistry.HTTP_REQUEST.executor,
-  [NodeType.NAVIGATION]: TaskRegistry.NAVIGATION.executor,
-  [NodeType.WAIT_FOR_ELEMENT]: TaskRegistry.WAIT_FOR_ELEMENT.executor,
-  [NodeType.TYPE_TEXT]: TaskRegistry.TYPE_TEXT.executor,
-  [NodeType.CLICK_ELEMENT]: TaskRegistry.CLICK_ELEMENT.executor,
-  [NodeType.WAIT_TIME]: TaskRegistry.WAIT_TIME.executor,
-  [NodeType.SET_VARIABLES]: TaskRegistry.SET_VARIABLES.executor,
+const registry = new Map<NodeType, NodeExecutor>()
+
+export function registerExecutor(type: NodeType, executor: NodeExecutor) {
+  registry.set(type, executor)
 }
 
-export const getExecutor = (type: NodeType): NodeExecutor => {
-  const executor = executorRegistry[type]
+export function getExecutor(type: NodeType): NodeExecutor {
+  const executor = registry.get(type)
 
-  if (!executor) throw new Error(`Executor not found for ${type} node`)
-
+  if (!executor) {
+    throw new Error(`Executor not registered for ${type}`)
+  }
   return executor
+}
+
+export function registerAllExecutors() {
+  registerExecutor(NodeType.HTTP_REQUEST, httpRequestExecutor)
+  registerExecutor(NodeType.NAVIGATION, navigationExecutor)
+  registerExecutor(NodeType.WAIT_FOR_ELEMENT, waitForElementNodeExecutor)
+  registerExecutor(NodeType.TYPE_TEXT, typeTextExecutor)
+  registerExecutor(NodeType.WAIT_TIME, waitTimeNodeExecutor)
+  registerExecutor(NodeType.SET_VARIABLES, setVariableNodeExecutor)
+  registerExecutor(NodeType.CLICK_ELEMENT, clickElementExecutor)
+  registerExecutor(NodeType.LOOP, loopNodeExecutor)
 }
