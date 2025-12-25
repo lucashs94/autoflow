@@ -2,7 +2,13 @@ import { Button } from '@renderer/components/ui/button'
 import { useExecuteWorkflow } from '@renderer/features/workflows/hooks/useWorkflows'
 import { FlaskConicalIcon } from 'lucide-react'
 
-export function ExecuteWorkflowBtn({ workflowId }: { workflowId: string }) {
+export function ExecuteWorkflowBtn({
+  workflowId,
+  hasChanges,
+}: {
+  workflowId: string
+  hasChanges: boolean
+}) {
   const executeWorkflow = useExecuteWorkflow()
 
   const handleExecute = () => {
@@ -13,7 +19,8 @@ export function ExecuteWorkflowBtn({ workflowId }: { workflowId: string }) {
     <Button
       size={'lg'}
       onClick={handleExecute}
-      disabled={executeWorkflow.isPending}
+      disabled={executeWorkflow.isPending || hasChanges}
+      className="disabled:cursor-not-allowed! cursor-pointer!"
     >
       <FlaskConicalIcon />
       Execute Workflow
