@@ -4,7 +4,13 @@ import { useUpdateWorkflow } from '@renderer/features/workflows/hooks/useWorkflo
 import { useAtomValue } from 'jotai'
 import { SaveIcon } from 'lucide-react'
 
-export function SaveWorkflowBtn({ workflowId }: { workflowId: string }) {
+export function SaveWorkflowBtn({
+  workflowId,
+  hasChanges,
+}: {
+  workflowId: string
+  hasChanges: boolean
+}) {
   const editor = useAtomValue(editorAtom)
   const saveWorkflow = useUpdateWorkflow()
 
@@ -25,7 +31,8 @@ export function SaveWorkflowBtn({ workflowId }: { workflowId: string }) {
     <Button
       size={'lg'}
       onClick={handleSave}
-      disabled={saveWorkflow.isPending}
+      disabled={saveWorkflow.isPending || !hasChanges}
+      className="disabled:cursor-not-allowed! cursor-pointer!"
     >
       <SaveIcon />
       Save

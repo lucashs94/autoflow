@@ -1,12 +1,11 @@
+import { ConnectionLineCustom } from '@renderer/components/edges/connectionLines'
 import { DeletableEdge } from '@renderer/components/edges/deletableEdge'
 import { ErrorView } from '@renderer/components/errorView'
 import { LoadingView } from '@renderer/components/loadingView'
 import { Button } from '@renderer/components/ui/button'
 import { nodeComponents } from '@renderer/config/nodeComponents'
-import {
-  editorAtom,
-  workflowIdAtom,
-} from '@renderer/features/editor/store/atom'
+import { editorAtom } from '@renderer/features/editor/store/atom'
+import { registerAllExecutors } from '@renderer/features/tasks/registries/executorRegistry'
 import {
   useUpdateWorkflow,
   useWorkflow,
@@ -20,7 +19,6 @@ import {
   Controls,
   Edge,
   EdgeChange,
-  getOutgoers,
   Node,
   NodeChange,
   Panel,
@@ -29,7 +27,8 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useSetAtom } from 'jotai'
 import { MoreHorizontalIcon } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { getSnapshot, verifyHasChanges } from '../../utils/hasChanges'
 import { AddNodeBtn } from '../components/addNodeBtn'
 import { EditorHeaderName } from '../components/editorHeaderName'
 import { ExecuteWorkflowBtn } from '../components/executeWorkflowBtn'
@@ -41,15 +40,12 @@ const edgeTypes = {
 
 export function Editor({ workflowId }: { workflowId: string }) {
   const setEditorInstance = useSetAtom(editorAtom)
-  const setWorkflowId = useSetAtom(workflowIdAtom)
   const saveWorkflow = useUpdateWorkflow()
 
   const { data: workflow } = useWorkflow(workflowId)
 
   const [nodes, setNodes] = useState<Node[]>(workflow?.nodes || [])
   const [edges, setEdges] = useState<Edge[]>(workflow?.edges || [])
-
-  if (workflow) setWorkflowId(workflow.id)
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) =>
@@ -77,18 +73,19 @@ export function Editor({ workflowId }: { workflowId: string }) {
 
       if (!source || !target) return false
 
-      const hasCycle = (node: Node, visited = new Set()) => {
-        if (visited.has(node.id)) return false
-        visited.add(node.id)
+      // const hasCycle = (node: Node, visited = new Set()) => {
+      //   if (visited.has(node.id)) return false
+      //   visited.add(node.id)
 
-        for (const outgoer of getOutgoers(node, nodes, edges)) {
-          if (outgoer.id === connection.source) return true
-          if (hasCycle(outgoer, visited)) return true
-        }
-      }
-      const detectedCycle = hasCycle(target)
+      //   for (const outgoer of getOutgoers(node, nodes, edges)) {
+      //     if (outgoer.id === connection.source) return true
+      //     if (hasCycle(outgoer, visited)) return true
+      //   }
+      // }
+      // const detectedCycle = hasCycle(target)
 
-      return !detectedCycle
+      // return !detectedCycle
+      return true
     },
     [nodes, edges]
   )
@@ -108,6 +105,13 @@ export function Editor({ workflowId }: { workflowId: string }) {
     })
   }
 
+  const snapshot = getSnapshot(workflow)
+  const hasChanges = verifyHasChanges(nodes, edges, snapshot)
+
+  useEffect(() => {
+    registerAllExecutors()
+  }, [])
+
   return (
     <div
       className="size-full bg-muted"
@@ -119,11 +123,13 @@ export function Editor({ workflowId }: { workflowId: string }) {
         edges={edges}
         nodeTypes={nodeComponents}
         edgeTypes={edgeTypes}
+        connectionLineComponent={ConnectionLineCustom}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         isValidConnection={isValidConnection}
         onInit={setEditorInstance}
+        deleteKeyCode={['Backspace', 'Delete']}
         fitView
         proOptions={{
           hideAttribution: true,
@@ -147,8 +153,14 @@ export function Editor({ workflowId }: { workflowId: string }) {
           className="flex flex-col items-end gap-4"
         >
           <div className="flex gap-2">
-            <ExecuteWorkflowBtn workflowId={workflowId} />
-            <SaveWorkflowBtn workflowId={workflowId} />
+            <ExecuteWorkflowBtn
+              workflowId={workflowId}
+              hasChanges={hasChanges}
+            />
+            <SaveWorkflowBtn
+              workflowId={workflowId}
+              hasChanges={hasChanges}
+            />
 
             <Button
               size="icon-lg"
