@@ -26,6 +26,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormItem,
   FormLabel,
   FormMessage,
@@ -228,7 +229,7 @@ export const SettingsDialog = ({
               name="variables"
               render={({ field, fieldState }) => (
                 <FormItem>
-                  <FormLabel>Variables</FormLabel>
+                  <FormLabel>Variables (json format)</FormLabel>
 
                   <FormControl>
                     <div className="space-y-1 min-h-[220px]">
@@ -250,7 +251,9 @@ export const SettingsDialog = ({
 
                   <FormMessage />
 
-                  {/* <FormDescription>min: 1s | max: 60s</FormDescription> */}
+                  <FormDescription>
+                    Always should be a valid json
+                  </FormDescription>
                 </FormItem>
               )}
             />
