@@ -26,7 +26,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormItem,
   FormLabel,
   FormMessage,
@@ -37,19 +36,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 const formSchema = z.object({
-  variables: z
-    .string()
-    .min(1, { message: 'Variables is required' })
-    .superRefine((value, ctx) => {
-      try {
-        JSON.parse(value || '{}')
-      } catch (e: any) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: e.message || 'JSON inválido',
-        })
-      }
-    }),
+  variables: z.string().min(1, { message: 'Variables is required' }),
 })
 
 export type FormValues = z.infer<typeof formSchema>
@@ -77,7 +64,6 @@ export const SettingsDialog = ({
   })
 
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log('Form submitted with values:', values)
     onSubmit(values)
     onOpenChange(false)
   }
@@ -98,12 +84,13 @@ export const SettingsDialog = ({
         const length = view.state.doc.length
         view.dispatch({
           selection: { anchor: length, head: length },
-          scrollIntoView: true, // Ensure the end of the text is visible
+          scrollIntoView: true,
         })
-        view.focus() //Optionally focus the editor
+        view.focus()
       }
     }
   }
+
   useEffect(() => {
     setTimeout(() => {
       setCursorToEnd()
@@ -250,10 +237,6 @@ export const SettingsDialog = ({
                   </FormControl>
 
                   <FormMessage />
-
-                  <FormDescription>
-                    Always should be a valid json
-                  </FormDescription>
                 </FormItem>
               )}
             />

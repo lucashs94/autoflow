@@ -1,12 +1,7 @@
 import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
+import { compileTemplate } from '@renderer/lib/handleBars'
 import { verifyMinimunNodeExecutionTime } from '@renderer/utils/minNodeExecutionTime'
-import Handlebars from 'handlebars'
-
-Handlebars.registerHelper('json', (context) => {
-  const jsonString = JSON.stringify(context, null, 2)
-  return new Handlebars.SafeString(jsonString)
-})
 
 type ExecutorDataProps = {
   name?: string
@@ -35,7 +30,9 @@ export const setVariableNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
       throw new Error(`Variables not found`)
     }
 
-    const variables = JSON.parse(data.variables)
+    // const variables = JSON.parse(data.variables)
+    const variables = compileTemplate(data.variables!)(context)
+    const parsedVariables = JSON.parse(variables)
 
     await verifyMinimunNodeExecutionTime(start)
 
@@ -46,7 +43,7 @@ export const setVariableNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
 
     return {
       ...context,
-      [data.name!]: variables,
+      [data.name!]: parsedVariables,
     }
   } catch (error) {
     publishStatus({
