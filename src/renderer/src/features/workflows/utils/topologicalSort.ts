@@ -87,7 +87,7 @@ export function topologicalSort(
       const allPrereqsPlanned = incomers.every((i) => planned.has(i.id))
       const somePrereqPlanned = incomers.some((i) => planned.has(i.id))
       const canSchedule =
-        currentNode.type === NodeType.LOOP && rootNode.type !== NodeType.LOOP
+        currentNode.type === NodeType.LOOP
           ? somePrereqPlanned
           : allPrereqsPlanned
 
