@@ -8,6 +8,7 @@ import {
   GlobeIcon,
   HourglassIcon,
   MousePointerIcon,
+  RepeatIcon,
   TimerResetIcon,
   TypeIcon,
 } from 'lucide-react'
@@ -83,6 +84,15 @@ const contextNodes: NodeTypeOption[] = [
   },
 ]
 
+const logicNodes: NodeTypeOption[] = [
+  {
+    type: NodeType.LOOP,
+    label: 'Loop',
+    description: 'Repeat a set of actions',
+    icon: RepeatIcon,
+  },
+]
+
 interface NodeSelectorProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -124,8 +134,6 @@ export function NodeSelector({
           data: { name: uniqueName },
         }
 
-        // if (hasInitialTrigger) return [newNode]
-
         return [...nodes, newNode]
       })
 
@@ -143,9 +151,9 @@ export function NodeSelector({
 
       <SheetContent
         side="right"
-        className="w-full md:max-w-md overflow-y-auto bg-muted!"
+        className="w-full md:max-w-md overflow-y-auto bg-muted! pb-4!"
       >
-        <SheetHeader className='pb-0'>
+        <SheetHeader className="pb-0">
           <SheetTitle className="text-xl">Select a node</SheetTitle>
 
           <SheetDescription>
@@ -206,6 +214,50 @@ export function NodeSelector({
 
           {contextNodes.length > 0 &&
             contextNodes.map((nodeType) => {
+              const Icon = nodeType.icon
+
+              return (
+                <div
+                  key={nodeType.type}
+                  className="w-full justify-start h-auto py-2 px-4 rounded-none 
+                cursor-pointer border-l-2 border-transparent hover:border-l-primary mt-2"
+                  onClick={() => handleNodeSelect(nodeType)}
+                >
+                  <div className="flex items-center gap-6 w-full overflow-hidden">
+                    {typeof Icon === 'string' ? (
+                      <img
+                        src={Icon}
+                        alt={nodeType.label}
+                        className="size-5 object-contain rounded-sm"
+                      />
+                    ) : (
+                      <Icon className="size-5" />
+                    )}
+
+                    <div className="flex flex-col items-start text-left">
+                      <span className="font-medium text-sm">
+                        {nodeType.label}
+                      </span>
+
+                      <span className="text-xs text-muted-foreground">
+                        {nodeType.description}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+        </div>
+
+        <div>
+          <Separator />
+
+          {logicNodes.length > 0 && (
+            <p className="mt-2 px-2  text-primary">Logic</p>
+          )}
+
+          {logicNodes.length > 0 &&
+            logicNodes.map((nodeType) => {
               const Icon = nodeType.icon
 
               return (
