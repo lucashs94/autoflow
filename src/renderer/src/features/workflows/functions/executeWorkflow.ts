@@ -1,22 +1,36 @@
-import { getExecutor } from '@renderer/features/tasks/registries/executorRegistry'
+import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
+import {
+  getExecutor,
+  registerAllExecutors,
+} from '@renderer/features/tasks/registries/executorRegistry'
 import { NodeType } from '@renderer/types/nodes'
 import { topologicalSort } from '../utils/topologicalSort'
 
 export async function executeWorkflow(
   workflowId: string
 ): Promise<{ workflowId: string; context: Record<string, unknown> }> {
-  // Get nodes and edges
   const workflow = await window.api.workflows.getOne(workflowId)
-
   if (!workflow) {
     throw new Error(`Workflow not found!`)
   }
 
   const initialNode = workflow.nodes.find((n) => n.type === NodeType.INITIAL)
-
   if (!initialNode) {
     throw new Error(`Workflow must have an initial node!`)
   }
+
+  ;(async () => {
+    workflow.nodes.forEach((node) => {
+      publishStatus({
+        nodeId: node.id,
+        status: 'initial',
+      })
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  })()
+
+  registerAllExecutors()
 
   // TODO: Add Types
 
@@ -42,8 +56,6 @@ export async function executeWorkflow(
       nodeId: node.id,
       workflowId,
     })
-
-    console.log(context)
   }
 
   // IPC finish flow

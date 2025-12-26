@@ -5,7 +5,6 @@ import { LoadingView } from '@renderer/components/loadingView'
 import { Button } from '@renderer/components/ui/button'
 import { nodeComponents } from '@renderer/config/nodeComponents'
 import { editorAtom } from '@renderer/features/editor/store/atom'
-import { registerAllExecutors } from '@renderer/features/tasks/registries/executorRegistry'
 import {
   useUpdateWorkflow,
   useWorkflow,
@@ -27,7 +26,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useSetAtom } from 'jotai'
 import { MoreHorizontalIcon } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { getSnapshot, verifyHasChanges } from '../../utils/hasChanges'
 import { AddNodeBtn } from '../components/addNodeBtn'
 import { EditorHeaderName } from '../components/editorHeaderName'
@@ -107,10 +106,6 @@ export function Editor({ workflowId }: { workflowId: string }) {
 
   const snapshot = getSnapshot(workflow)
   const hasChanges = verifyHasChanges(nodes, edges, snapshot)
-
-  useEffect(() => {
-    registerAllExecutors()
-  }, [])
 
   return (
     <div
