@@ -1,19 +1,22 @@
 import Handlebars from 'handlebars'
 
 Handlebars.registerHelper('json', (context) => {
-  const jsonString = JSON.stringify(context, null, 2)
+  const jsonString =
+    context === undefined ? 'null' : JSON.stringify(context, null, 2)
   return new Handlebars.SafeString(jsonString)
 })
 
 Handlebars.registerHelper('resolve', function (this: any, expression: string) {
   if (!expression) return undefined
 
-  // separa no último ponto (permite node com ponto no nome, se quiser)
-  const lastDot = expression.lastIndexOf('.')
-  if (lastDot === -1) return undefined
+  const expr = String(expression).trim()
+  const lastDot = expr.lastIndexOf('.')
+  if (lastDot === -1) {
+    return this?.[expr]
+  }
 
-  const nodeName = expression.slice(0, lastDot).trim()
-  const variable = expression.slice(lastDot + 1).trim()
+  const nodeName = expr.slice(0, lastDot).trim()
+  const variable = expr.slice(lastDot + 1).trim()
 
   return this?.[nodeName]?.[variable]
 })
