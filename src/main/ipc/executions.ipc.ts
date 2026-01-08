@@ -5,6 +5,7 @@ import {
   typeTextService,
   waitForElementService,
 } from '../services/executions.service'
+import { BrowserController } from '../puppeteer'
 
 ipcMain.handle('execution:navigateUrl', async (_, url: string) =>
   navigateUrlService(url)
@@ -25,3 +26,10 @@ ipcMain.handle(
   async (_, selector: string, shouldBe: 'visible' | 'hidden', timeout?: number) =>
     await waitForElementService(selector, shouldBe, timeout)
 )
+
+// Abort current browser operations (not close browser, just cancel in-flight operations)
+ipcMain.handle('execution:abort', async () => {
+  const instance = BrowserController.getInstance()
+  instance.shouldStop = true
+  instance.abortController?.abort()
+})

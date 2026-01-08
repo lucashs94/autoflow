@@ -19,6 +19,7 @@ export const httpRequestExecutor: NodeExecutor<ExecutorDataProps> = async ({
   context,
   data,
   nodeId,
+  signal,
 }) => {
   publishStatus({
     nodeId,
@@ -26,7 +27,15 @@ export const httpRequestExecutor: NodeExecutor<ExecutorDataProps> = async ({
   })
 
   // TODO: Remove this wait simulate point
-  await new Promise((resolve) => setTimeout(resolve, 1_000))
+  await new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(resolve, 1_000)
+    if (signal) {
+      signal.addEventListener('abort', () => {
+        clearTimeout(timeoutId)
+        reject(new Error('HTTP request cancelled'))
+      })
+    }
+  })
 
   try {
     const result = (async () => {
@@ -42,7 +51,10 @@ export const httpRequestExecutor: NodeExecutor<ExecutorDataProps> = async ({
       const method = data.method
       const endpoint = data.endpoint
 
-      const options: KyOptions = { method }
+      const options: KyOptions = {
+        method,
+        signal, // Pass abort signal to ky
+      }
 
       if (['POST', 'PUT', 'PATCH'].includes(method)) {
         if (data.body) {

@@ -5,6 +5,7 @@ export interface NodeExecutorParams<TData = Record<string, unknown>> {
   nodeId: string
   workflowId: string
   context: WorkflowContext
+  signal?: AbortSignal
 }
 
 export type NodeExecutor<TData = Record<string, unknown>> = (

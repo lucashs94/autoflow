@@ -16,6 +16,7 @@ export const waitTimeNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
   context,
   data,
   nodeId,
+  signal,
 }) => {
   publishStatus({
     nodeId,
@@ -32,9 +33,18 @@ export const waitTimeNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
       throw new Error(`timeInSeconds is required`)
     }
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, Number(data.time) * 1_000)
-    )
+    // Make wait time cancellable
+    await new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(resolve, Number(data.time) * 1_000)
+
+      // Listen for abort signal
+      if (signal) {
+        signal.addEventListener('abort', () => {
+          clearTimeout(timeoutId)
+          reject(new Error('Wait time cancelled'))
+        })
+      }
+    })
 
     publishStatus({
       nodeId,

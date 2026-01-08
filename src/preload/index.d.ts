@@ -32,6 +32,7 @@ declare global {
           shouldBe: 'visible' | 'hidden',
           timeout?: number
         ) => Promise<IPCResult<void>>
+        abort: () => Promise<void>
       }
     }
   }

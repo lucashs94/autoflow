@@ -104,7 +104,13 @@ export const useUpdateWorkflow = () => {
  */
 export const useExecuteWorkflow = () => {
   return useMutation({
-    mutationFn: async (workflowId: string) => await executeWorkflow(workflowId),
+    mutationFn: async ({
+      workflowId,
+      signal,
+    }: {
+      workflowId: string
+      signal?: AbortSignal
+    }) => await executeWorkflow(workflowId, signal),
     onSuccess: () => {
       toast.success(`Workflow executed!`)
     },

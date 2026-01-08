@@ -85,6 +85,8 @@ export class BrowserController {
     timeout?: number
     shouldBe: 'visible' | 'hidden'
   }): Promise<void> {
+    if (this.shouldStop) return
+
     if (!this.page || !this.browser)
       throw new Error(`Browser or page not found`)
 
@@ -103,6 +105,8 @@ export class BrowserController {
     selector: string
     text: string
   }): Promise<void> {
+    if (this.shouldStop) return
+
     if (!this.page || !this.browser || !this.abortController)
       throw new Error(`Browser or page not found`)
 
@@ -112,6 +116,8 @@ export class BrowserController {
   }
 
   async waitAndClick({ selector }: { selector: string }): Promise<void> {
+    if (this.shouldStop) return
+
     if (!this.page || !this.browser || !this.abortController)
       throw new Error(`Browser or page not found`)
 

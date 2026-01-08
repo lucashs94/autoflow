@@ -17,6 +17,7 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
   data,
   nodeId,
   workflowId,
+  signal,
 }) => {
   const start = performance.now()
 
@@ -84,6 +85,12 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
 
     // Executar a sequencia de nodes passando o item como contexto
     for (const item of vars) {
+      // Check if workflow was cancelled before processing this iteration
+      if (signal?.aborted) {
+        console.log('Loop cancelled - stopping iterations')
+        throw new Error('Loop execution cancelled')
+      }
+
       nextNodes.forEach((node) => {
         if (node.type !== NodeType.LOOP) {
           publishStatus({
@@ -101,6 +108,23 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
       }
 
       for (const node of nextNodes) {
+        // Check if cancelled before each node in the loop
+        if (signal?.aborted) {
+          console.log('Loop cancelled during node execution')
+
+          // Reset internal nodes to initial state
+          nextNodes.forEach((n) => {
+            if (n.type !== NodeType.LOOP) {
+              publishStatus({
+                nodeId: n.id,
+                status: 'initial',
+              })
+            }
+          })
+
+          throw new Error('Loop execution cancelled')
+        }
+
         if (node.type === NodeType.LOOP && node.id === nodeId) continue
 
         const executor = getExecutor(node.type as NodeType)
@@ -110,6 +134,7 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
           context: internalContext,
           nodeId: node.id,
           workflowId,
+          signal, // Pass signal to nested executors
         })
       }
 

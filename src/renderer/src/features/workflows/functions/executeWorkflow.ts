@@ -8,7 +8,8 @@ import { isSuccess } from '@shared/@types/ipc-response'
 import { topologicalSort } from '../utils/topologicalSort'
 
 export async function executeWorkflow(
-  workflowId: string
+  workflowId: string,
+  signal?: AbortSignal
 ): Promise<{ workflowId: string; context: Record<string, unknown> }> {
   const result = await window.api.workflows.getOne(workflowId)
 
@@ -50,16 +51,80 @@ export async function executeWorkflow(
 
   // Loop on each node and run the executor
   for (const node of sorted) {
+    // Check if workflow was cancelled
+    if (signal?.aborted) {
+      console.log('Workflow cancelled - resetting remaining nodes')
+      // Return current context
+      return {
+        workflowId,
+        context,
+      }
+    }
+
     if (node.type === NodeType.INITIAL) continue
 
     const executor = getExecutor(node.type as NodeType)
 
-    context = await executor({
-      data: node.data as Record<string, unknown>,
-      context,
-      nodeId: node.id,
-      workflowId,
-    })
+    try {
+      context = await executor({
+        data: node.data as Record<string, unknown>,
+        context,
+        nodeId: node.id,
+        workflowId,
+        signal,
+      })
+    } catch (error) {
+      // Check if it was cancelled during execution
+      if (signal?.aborted) {
+        console.log(
+          'Workflow cancelled during node execution - resetting remaining nodes'
+        )
+
+        // Keep current node in loading state (it was interrupted, not reset)
+        // Only reset the remaining nodes that haven't started
+
+        // Reset all remaining nodes
+        const currentIndex = sorted.indexOf(node)
+        sorted.slice(currentIndex + 1).forEach((remainingNode) => {
+          if (remainingNode.type !== NodeType.INITIAL) {
+            publishStatus({
+              nodeId: remainingNode.id,
+              status: 'initial',
+            })
+          }
+        })
+
+        return {
+          workflowId,
+          context,
+        }
+      }
+      // Re-throw other errors
+      throw error
+    }
+
+    // Check again after executor completes in case it was cancelled during execution
+    if (signal?.aborted) {
+      console.log(
+        'Workflow cancelled after node execution - resetting remaining nodes'
+      )
+
+      // Reset all remaining nodes
+      const currentIndex = sorted.indexOf(node)
+      sorted.slice(currentIndex + 1).forEach((remainingNode) => {
+        if (remainingNode.type !== NodeType.INITIAL) {
+          publishStatus({
+            nodeId: remainingNode.id,
+            status: 'initial',
+          })
+        }
+      })
+
+      return {
+        workflowId,
+        context,
+      }
+    }
   }
 
   // IPC finish flow
