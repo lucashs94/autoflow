@@ -1,6 +1,6 @@
 import { Button } from '@renderer/components/ui/button'
 import { useExecuteWorkflow } from '@renderer/features/workflows/hooks/useWorkflows'
-import { FlaskConicalIcon } from 'lucide-react'
+import { FlaskConicalIcon, LoaderIcon, SquareIcon } from 'lucide-react'
 
 export function ExecuteWorkflowBtn({
   workflowId,
@@ -16,14 +16,33 @@ export function ExecuteWorkflowBtn({
   }
 
   return (
-    <Button
-      size={'lg'}
-      onClick={handleExecute}
-      disabled={executeWorkflow.isPending || hasChanges}
-      className="disabled:cursor-not-allowed! cursor-pointer!"
-    >
-      <FlaskConicalIcon />
-      Execute Workflow
-    </Button>
+    <div className="flex gap-2">
+      <Button
+        size={'lg'}
+        onClick={handleExecute}
+        disabled={executeWorkflow.isPending || hasChanges}
+        className="disabled:cursor-not-allowed! cursor-pointer! relative"
+      >
+        {executeWorkflow.isPending ? (
+          <LoaderIcon className="animate-spin" />
+        ) : (
+          <FlaskConicalIcon />
+        )}
+        Execute Workflow
+      </Button>
+
+      {executeWorkflow.isPending && (
+        <Button
+          size={'lg'}
+          onClick={() => {
+            console.log('cancel')
+          }}
+          variant={'destructive'}
+          className="disabled:cursor-not-allowed! cursor-pointer! animate-in fade-in-0 zoom-in-95 slide-in-from-right-2 duration-500 ease-out"
+        >
+          <SquareIcon />
+        </Button>
+      )}
+    </div>
   )
 }

@@ -1,14 +1,26 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow, shell } from 'electron'
-import { join } from 'path'
+import path, { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 import './ipc'
+
+app.setName('Web Automation')
+if (process.platform === 'darwin') {
+  app.dock?.setIcon(path.join(icon))
+}
+
+app.setAboutPanelOptions({
+  applicationName: 'Web Automation',
+  applicationVersion: '1.0.0',
+  copyright: '© 2026 LHS Dev',
+})
 
 export let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
   // Create the browser window.
   mainWindow = new BrowserWindow({
+    title: 'Web Automation',
     width: 1400,
     height: 800,
     minHeight: 670,

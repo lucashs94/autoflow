@@ -13,6 +13,11 @@ type NodeProps = {
   name: string
   selector?: string
   timeout?: number
+  filters?: {
+    property: string
+    operator: string
+    value: string
+  }[]
 }
 
 type NodeType = Node<NodeProps>
