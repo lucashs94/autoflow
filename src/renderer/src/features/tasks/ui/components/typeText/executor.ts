@@ -1,5 +1,6 @@
 import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
+import { isSuccess } from '@shared/@types/ipc-response'
 import Handlebars from 'handlebars'
 
 Handlebars.registerHelper('json', (context) => {
@@ -33,7 +34,15 @@ export const typeTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
       throw new Error(`Selector or text not found`)
     }
 
-    await window.api.executions.typeText(data.selector, data.text)
+    const result = await window.api.executions.typeText(data.selector, data.text)
+
+    if (!isSuccess(result)) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
+      throw new Error(result.error.message)
+    }
 
     publishStatus({
       nodeId,

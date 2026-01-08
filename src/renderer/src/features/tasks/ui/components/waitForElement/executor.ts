@@ -1,5 +1,6 @@
 import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
+import { isSuccess } from '@shared/@types/ipc-response'
 import Handlebars from 'handlebars'
 
 Handlebars.registerHelper('json', (context) => {
@@ -23,11 +24,19 @@ export const waitForElementNodeExecutor: NodeExecutor<
   })
 
   try {
-    await window.api.executions.waitForElement(
+    const result = await window.api.executions.waitForElement(
       data.selector!,
       data.shouldBe!,
       data.timeout! * 1000
     )
+
+    if (!isSuccess(result)) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
+      throw new Error(result.error.message)
+    }
 
     publishStatus({
       nodeId,

@@ -1,5 +1,6 @@
 import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
+import { isSuccess } from '@shared/@types/ipc-response'
 import Handlebars from 'handlebars'
 
 Handlebars.registerHelper('json', (context) => {
@@ -29,10 +30,18 @@ export const navigationExecutor: NodeExecutor<ExecutorDataProps> = async ({
         status: 'error',
       })
 
-      throw new Error(`Url not found`)
+      throw new Error(`URL not found`)
     }
 
-    await window.api.executions.navigateUrl(data.url)
+    const result = await window.api.executions.navigateUrl(data.url)
+
+    if (!isSuccess(result)) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
+      throw new Error(result.error.message)
+    }
 
     publishStatus({
       nodeId,

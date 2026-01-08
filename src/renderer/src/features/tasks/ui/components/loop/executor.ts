@@ -5,6 +5,7 @@ import { topologicalSort } from '@renderer/features/workflows/utils/topologicalS
 import { compileTemplate } from '@renderer/lib/handleBars'
 import { NodeType } from '@renderer/types/nodes'
 import { verifyMinimunNodeExecutionTime } from '@renderer/utils/minNodeExecutionTime'
+import { isSuccess } from '@shared/@types/ipc-response'
 
 type ExecutorDataProps = {
   name?: string
@@ -33,18 +34,25 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
       throw new Error(`variable is required`)
     }
 
-    const workflow = await window.api.workflows.getOne(workflowId)
-    if (!workflow) {
-      throw new Error(`Workflow not found!`)
+    const workflowResult = await window.api.workflows.getOne(workflowId)
+
+    if (!isSuccess(workflowResult)) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
+      throw new Error(workflowResult.error.message)
     }
+
+    const workflow = workflowResult.data
 
     const rootNode = workflow.nodes.find((n) => n.id === nodeId)
     if (!rootNode) {
       throw new Error(`Workflow must have an initial node!`)
     }
 
-    const result = compileTemplate(data.variableList!)(context)
-    const vars = JSON.parse(result)
+    const compiledTemplate = compileTemplate(data.variableList!)(context)
+    const vars = JSON.parse(compiledTemplate)
 
     //Verifica se variavel indicada é uma lista
     if (!Array.isArray(vars)) {

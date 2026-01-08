@@ -1,10 +1,8 @@
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { Edge, Node } from '@xyflow/react'
 import { toast } from 'sonner'
+import { useIPCQuery } from '@renderer/lib/hooks/useIPCQuery'
+import { useIPCMutation } from '@renderer/lib/hooks/useIPCMutation'
 import { executeWorkflow } from '../functions/executeWorkflow'
 
 /**
@@ -12,7 +10,7 @@ import { executeWorkflow } from '../functions/executeWorkflow'
  * @returns The list of workflows for the authenticated user.
  */
 export const useWorkflows = () => {
-  return useSuspenseQuery({
+  return useIPCQuery({
     queryKey: ['workflows'],
     queryFn: () => window.api.workflows.getMany(),
   })
@@ -20,10 +18,10 @@ export const useWorkflows = () => {
 
 /**
  * Hook get a single workflow
- * * @returns a workflows with their nodes and edges
+ * @returns a workflows with their nodes and edges
  */
 export const useWorkflow = (workflowId: string) => {
-  return useSuspenseQuery({
+  return useIPCQuery({
     queryKey: ['workflow', workflowId],
     queryFn: () => window.api.workflows.getOne(workflowId),
   })
@@ -33,18 +31,12 @@ export const useWorkflow = (workflowId: string) => {
  * Hook to create new workflow
  */
 export const useCreateWorkflow = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation({
+  return useIPCMutation({
     mutationKey: ['createWorkflow'],
     mutationFn: (name: string) => window.api.workflows.create(name),
-    onError: () => {
-      toast.error('Erro ao criar workflow!', { id: 'create-workflow' })
-    },
-    onSuccess: () => {
-      toast.success('Workflow criado com sucesso!', { id: 'create-workflow' })
-      queryClient.invalidateQueries({ queryKey: ['workflows'] })
-    },
+    successMessage: 'Workflow created successfully!',
+    errorMessage: 'Failed to create workflow!',
+    invalidateQueries: [['workflows']],
   })
 }
 
@@ -52,26 +44,12 @@ export const useCreateWorkflow = () => {
  * Hook to remove a workflow
  */
 export const useDeleteWorkflow = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation({
+  return useIPCMutation({
     mutationKey: ['deleteWorkflow'],
     mutationFn: (workflowId: string) => window.api.workflows.delete(workflowId),
-    onError: (error) => {
-      console.log(error)
-
-      toast.error('Erro ao excluir workflow!', {
-        id: 'delete-workflow',
-      })
-    },
-    onSuccess: () => {
-      toast.success('Workflow excluído com sucesso!', {
-        id: 'delete-workflow',
-      })
-      queryClient.invalidateQueries({
-        queryKey: ['workflows'],
-      })
-    },
+    successMessage: 'Workflow deleted successfully!',
+    errorMessage: 'Failed to delete workflow!',
+    invalidateQueries: [['workflows']],
   })
 }
 
@@ -81,22 +59,15 @@ export const useDeleteWorkflow = () => {
 export const useUpdateWorkflowName = () => {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useIPCMutation({
     mutationKey: ['updateWorkflowName'],
     mutationFn: (params: { workflowId: string; name: string }) =>
       window.api.workflows.updateWorkflowName(params.workflowId, params.name),
-    onError: () => {
-      toast.error('Erro ao atualizar nome do workflow!', {
-        id: 'update-workflow-name',
-      })
-    },
-    onSuccess: (_, { workflowId }) => {
-      toast.success('Workflow atualizado com sucesso!', {
-        id: 'update-workflow-name',
-      })
-      queryClient.invalidateQueries({
-        queryKey: ['workflow', workflowId],
-      })
+    successMessage: 'Workflow name updated successfully!',
+    errorMessage: 'Failed to update workflow name!',
+    invalidateQueries: [],
+    onSuccessCallback: (_, { workflowId }) => {
+      queryClient.invalidateQueries({ queryKey: ['workflow', workflowId] })
     },
   })
 }
@@ -107,7 +78,7 @@ export const useUpdateWorkflowName = () => {
 export const useUpdateWorkflow = () => {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useIPCMutation({
     mutationKey: ['updateWorkflow'],
     mutationFn: (params: {
       workflowId: string
@@ -119,16 +90,11 @@ export const useUpdateWorkflow = () => {
         params.nodes,
         params.edges
       ),
-    onError: () => {
-      toast.error('Erro ao atualizar workflow!', { id: 'update-workflow' })
-    },
-    onSuccess: (_, { workflowId }) => {
-      toast.success('Workflow atualizado com sucesso!', {
-        id: 'update-workflow',
-      })
-      queryClient.invalidateQueries({
-        queryKey: ['workflow', workflowId],
-      })
+    successMessage: 'Workflow updated successfully!',
+    errorMessage: 'Failed to update workflow!',
+    invalidateQueries: [],
+    onSuccessCallback: (_, { workflowId }) => {
+      queryClient.invalidateQueries({ queryKey: ['workflow', workflowId] })
     },
   })
 }

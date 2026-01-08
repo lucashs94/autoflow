@@ -4,15 +4,19 @@ import {
   registerAllExecutors,
 } from '@renderer/features/tasks/registries/executorRegistry'
 import { NodeType } from '@renderer/types/nodes'
+import { isSuccess } from '@shared/@types/ipc-response'
 import { topologicalSort } from '../utils/topologicalSort'
 
 export async function executeWorkflow(
   workflowId: string
 ): Promise<{ workflowId: string; context: Record<string, unknown> }> {
-  const workflow = await window.api.workflows.getOne(workflowId)
-  if (!workflow) {
-    throw new Error(`Workflow not found!`)
+  const result = await window.api.workflows.getOne(workflowId)
+
+  if (!isSuccess(result)) {
+    throw new Error(result.error.message)
   }
+
+  const workflow = result.data
 
   const initialNode = workflow.nodes.find((n) => n.type === NodeType.INITIAL)
   if (!initialNode) {
