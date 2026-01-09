@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { FieldEditChange } from '@renderer/components/fieldEditChange'
+import { TemplateInput } from '@renderer/components/templateInput'
 import { Button } from '@renderer/components/ui/button'
 import {
   Dialog,
@@ -17,11 +18,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@renderer/components/ui/form'
-import { TemplateInput } from '@renderer/components/templateInput'
 import { Slider } from '@renderer/components/ui/slider'
 import { ElementFilter } from '@renderer/features/tasks/types/filters'
-import { getAllAvailableVariables } from '@renderer/utils/getAvailableVariables'
 import { useWorkflow } from '@renderer/features/workflows/hooks/useWorkflows'
+import { getAllAvailableVariables } from '@renderer/utils/getAvailableVariables'
 import { useParams } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -30,7 +30,10 @@ import { FilterBuilder } from '../shared/FilterBuilder'
 
 const formSchema = z.object({
   selector: z.string().min(1, { message: 'Selector is required' }),
-  timeout: z.coerce.number().min(1).max(60, { message: 'Should be lower than 60' }),
+  timeout: z.coerce
+    .number()
+    .min(1)
+    .max(60, { message: 'Should be lower than 60' }),
   filters: z.array(z.any()).default([]),
 })
 
@@ -67,7 +70,10 @@ export const SettingsDialog = ({
   // Debug log
   useEffect(() => {
     console.log('[ClickElement Dialog] Workflow:', workflow)
-    console.log('[ClickElement Dialog] Available variables:', availableVariables)
+    console.log(
+      '[ClickElement Dialog] Available variables:',
+      availableVariables
+    )
   }, [workflow, availableVariables])
 
   const form = useForm<FormValues>({
@@ -121,7 +127,6 @@ export const SettingsDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Selector</FormLabel>
-                  {/* Add info tooltip */}
 
                   <FormControl>
                     <TemplateInput

@@ -81,8 +81,11 @@ export const EntityItem = ({
                     align="end"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <DropdownMenuItem onClick={handleRemove}>
-                      <TrashIcon className="size-4" />
+                    <DropdownMenuItem
+                      onClick={handleRemove}
+                      className="text-destructive hover:text-destructive!"
+                    >
+                      <TrashIcon className="size-4 text-destructive" />
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>

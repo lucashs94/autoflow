@@ -1,6 +1,6 @@
 import { EntityItem } from '@renderer/components/entityItem'
 import { formatDistanceToNow } from 'date-fns'
-import { HistoryIcon } from 'lucide-react'
+import { ChevronRightIcon, HistoryIcon } from 'lucide-react'
 import { ExecutionHistory } from '../../types'
 import { formatDuration } from '../../utils/formatters'
 import { StatusBadge } from './statusBadge'
@@ -17,13 +17,21 @@ export function ExecutionItem({ data }: ExecutionItemProps) {
       subtitle={
         <div className="flex items-center gap-4 text-sm">
           <StatusBadge status={data.status} />
+
           <span className="text-muted-foreground">
-            {formatDistanceToNow(new Date(data.started_at), { addSuffix: true })}
+            Ran:{' '}
+            {formatDistanceToNow(new Date(data.started_at), {
+              addSuffix: true,
+            })}
           </span>
-          <span className="text-muted-foreground">{formatDuration(data.duration)}</span>
+
+          <span className="text-muted-foreground">
+            Duration: {formatDuration(data.duration)}
+          </span>
         </div>
       }
-      image={<HistoryIcon className="size-8 text-muted-foreground" />}
+      image={<HistoryIcon className="size-6 text-muted-foreground mx-1" />}
+      actions={<ChevronRightIcon />}
     />
   )
 }

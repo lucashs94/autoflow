@@ -1,5 +1,5 @@
-import { Node as FlowNode, Edge } from '@xyflow/react'
 import { NodeType } from '@renderer/types/nodes'
+import { Edge, Node as FlowNode } from '@xyflow/react'
 
 /**
  * Get available template variables based on workflow topology
@@ -15,7 +15,7 @@ export function getAvailableVariables(
   // Find all nodes that come before the current node
   const previousNodes = getNodesBeforeCurrent(currentNodeId, nodes, edges)
 
-  previousNodes.forEach(node => {
+  previousNodes.forEach((node) => {
     // Add node name as the primary variable (this is what users reference)
     const nodeName = (node.data as any)?.name
     if (nodeName && nodeName !== 'Initial' && node.type !== NodeType.INITIAL) {
@@ -67,21 +67,21 @@ function getNodesBeforeCurrent(
     if (visited.has(nodeId) || nodeId === currentNodeId) return
     visited.add(nodeId)
 
-    const node = nodes.find(n => n.id === nodeId)
+    const node = nodes.find((n) => n.id === nodeId)
     if (node) {
       result.push(node)
     }
 
     // Find all edges that point to this node
-    const incomingEdges = edges.filter(e => e.target === nodeId)
-    incomingEdges.forEach(edge => {
+    const incomingEdges = edges.filter((e) => e.target === nodeId)
+    incomingEdges.forEach((edge) => {
       traverse(edge.source)
     })
   }
 
   // Start traversal from current node's predecessors
-  const incomingEdges = edges.filter(e => e.target === currentNodeId)
-  incomingEdges.forEach(edge => {
+  const incomingEdges = edges.filter((e) => e.target === currentNodeId)
+  incomingEdges.forEach((edge) => {
     traverse(edge.source)
   })
 
@@ -99,7 +99,7 @@ function getLoopContext(
   // Find if there's a loop node in the path to current node
   const previousNodes = getNodesBeforeCurrent(currentNodeId, nodes, edges)
 
-  const loopNode = previousNodes.find(node => node.type === NodeType.LOOP)
+  const loopNode = previousNodes.find((node) => node.type === NodeType.LOOP)
 
   if (loopNode) {
     const data = loopNode.data as any

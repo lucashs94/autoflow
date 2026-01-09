@@ -1,6 +1,11 @@
 import { EntityContainer } from '@renderer/components/entityContainer'
 import { Button } from '@renderer/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@renderer/components/ui/card'
 import { Link } from '@tanstack/react-router'
 import { ArrowLeftIcon } from 'lucide-react'
 import { useExecution, useNodeLogs } from '../../hooks/useHistory'
@@ -13,13 +18,16 @@ interface HistoryDetailProps {
 }
 
 export function HistoryDetail({ executionId }: HistoryDetailProps) {
-  const { data: execution, isLoading: loadingExecution } = useExecution(executionId)
+  const { data: execution, isLoading: loadingExecution } =
+    useExecution(executionId)
   const { data: nodeLogs, isLoading: loadingLogs } = useNodeLogs(executionId)
 
   if (loadingExecution || loadingLogs) {
     return (
       <EntityContainer className="bg-muted">
-        <div className="text-center py-8 text-muted-foreground">Loading execution details...</div>
+        <div className="text-center py-8 text-muted-foreground">
+          Loading execution details...
+        </div>
       </EntityContainer>
     )
   }
@@ -27,7 +35,9 @@ export function HistoryDetail({ executionId }: HistoryDetailProps) {
   if (!execution) {
     return (
       <EntityContainer className="bg-muted">
-        <div className="text-center py-8 text-muted-foreground">Execution not found</div>
+        <div className="text-center py-8 text-muted-foreground">
+          Execution not found
+        </div>
       </EntityContainer>
     )
   }
@@ -36,7 +46,7 @@ export function HistoryDetail({ executionId }: HistoryDetailProps) {
     <EntityContainer className="bg-muted">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex gap-4">
           <Link to="/history">
             <Button
               variant="ghost"
@@ -45,9 +55,12 @@ export function HistoryDetail({ executionId }: HistoryDetailProps) {
               <ArrowLeftIcon className="w-4 h-4" />
             </Button>
           </Link>
+
           <div>
             <h1 className="text-3xl font-bold">{execution.workflow_name}</h1>
-            <p className="text-muted-foreground">Execution details and node logs</p>
+            <p className="text-muted-foreground">
+              Execution details and node logs
+            </p>
           </div>
         </div>
 
@@ -64,7 +77,9 @@ export function HistoryDetail({ executionId }: HistoryDetailProps) {
           </CardHeader>
           <CardContent className="space-y-2">
             {!nodeLogs || nodeLogs.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">No node logs available</div>
+              <div className="text-center py-8 text-muted-foreground">
+                No node logs available
+              </div>
             ) : (
               nodeLogs.map((log: NodeExecutionLog, index: number) => (
                 <NodeLogItem
