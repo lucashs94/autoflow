@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as mainRouteRouteImport } from './routes/(main)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as mainWorkflowsIndexRouteImport } from './routes/(main)/workflows/index'
+import { Route as mainHistoryIndexRouteImport } from './routes/(main)/history/index'
 import { Route as mainWorkflowsWorkflowIdIndexRouteImport } from './routes/(main)/workflows/$workflowId/index'
+import { Route as mainHistoryExecutionIdIndexRouteImport } from './routes/(main)/history/$executionId/index'
 
 const mainRouteRoute = mainRouteRouteImport.update({
   id: '/(main)',
@@ -28,40 +30,69 @@ const mainWorkflowsIndexRoute = mainWorkflowsIndexRouteImport.update({
   path: '/workflows/',
   getParentRoute: () => mainRouteRoute,
 } as any)
+const mainHistoryIndexRoute = mainHistoryIndexRouteImport.update({
+  id: '/history/',
+  path: '/history/',
+  getParentRoute: () => mainRouteRoute,
+} as any)
 const mainWorkflowsWorkflowIdIndexRoute =
   mainWorkflowsWorkflowIdIndexRouteImport.update({
     id: '/workflows/$workflowId/',
     path: '/workflows/$workflowId/',
     getParentRoute: () => mainRouteRoute,
   } as any)
+const mainHistoryExecutionIdIndexRoute =
+  mainHistoryExecutionIdIndexRouteImport.update({
+    id: '/history/$executionId/',
+    path: '/history/$executionId/',
+    getParentRoute: () => mainRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/history': typeof mainHistoryIndexRoute
   '/workflows': typeof mainWorkflowsIndexRoute
+  '/history/$executionId': typeof mainHistoryExecutionIdIndexRoute
   '/workflows/$workflowId': typeof mainWorkflowsWorkflowIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/history': typeof mainHistoryIndexRoute
   '/workflows': typeof mainWorkflowsIndexRoute
+  '/history/$executionId': typeof mainHistoryExecutionIdIndexRoute
   '/workflows/$workflowId': typeof mainWorkflowsWorkflowIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/(main)': typeof mainRouteRouteWithChildren
+  '/(main)/history/': typeof mainHistoryIndexRoute
   '/(main)/workflows/': typeof mainWorkflowsIndexRoute
+  '/(main)/history/$executionId/': typeof mainHistoryExecutionIdIndexRoute
   '/(main)/workflows/$workflowId/': typeof mainWorkflowsWorkflowIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/workflows' | '/workflows/$workflowId'
+  fullPaths:
+    | '/'
+    | '/history'
+    | '/workflows'
+    | '/history/$executionId'
+    | '/workflows/$workflowId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/workflows' | '/workflows/$workflowId'
+  to:
+    | '/'
+    | '/history'
+    | '/workflows'
+    | '/history/$executionId'
+    | '/workflows/$workflowId'
   id:
     | '__root__'
     | '/'
     | '/(main)'
+    | '/(main)/history/'
     | '/(main)/workflows/'
+    | '/(main)/history/$executionId/'
     | '/(main)/workflows/$workflowId/'
   fileRoutesById: FileRoutesById
 }
@@ -93,6 +124,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof mainWorkflowsIndexRouteImport
       parentRoute: typeof mainRouteRoute
     }
+    '/(main)/history/': {
+      id: '/(main)/history/'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof mainHistoryIndexRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
     '/(main)/workflows/$workflowId/': {
       id: '/(main)/workflows/$workflowId/'
       path: '/workflows/$workflowId'
@@ -100,16 +138,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof mainWorkflowsWorkflowIdIndexRouteImport
       parentRoute: typeof mainRouteRoute
     }
+    '/(main)/history/$executionId/': {
+      id: '/(main)/history/$executionId/'
+      path: '/history/$executionId'
+      fullPath: '/history/$executionId'
+      preLoaderRoute: typeof mainHistoryExecutionIdIndexRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
   }
 }
 
 interface mainRouteRouteChildren {
+  mainHistoryIndexRoute: typeof mainHistoryIndexRoute
   mainWorkflowsIndexRoute: typeof mainWorkflowsIndexRoute
+  mainHistoryExecutionIdIndexRoute: typeof mainHistoryExecutionIdIndexRoute
   mainWorkflowsWorkflowIdIndexRoute: typeof mainWorkflowsWorkflowIdIndexRoute
 }
 
 const mainRouteRouteChildren: mainRouteRouteChildren = {
+  mainHistoryIndexRoute: mainHistoryIndexRoute,
   mainWorkflowsIndexRoute: mainWorkflowsIndexRoute,
+  mainHistoryExecutionIdIndexRoute: mainHistoryExecutionIdIndexRoute,
   mainWorkflowsWorkflowIdIndexRoute: mainWorkflowsWorkflowIdIndexRoute,
 }
 

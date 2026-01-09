@@ -1,6 +1,7 @@
 import { electronAPI } from '@electron-toolkit/preload'
 import { contextBridge } from 'electron'
 import { executions } from './executions.preload'
+import { history } from './history.preload'
 import { nodes } from './nodes.preload'
 import { workflows } from './workflows.preload'
 
@@ -9,6 +10,7 @@ const api = {
   workflows,
   nodes,
   executions,
+  history,
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

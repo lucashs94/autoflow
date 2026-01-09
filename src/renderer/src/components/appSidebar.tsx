@@ -23,9 +23,9 @@ const menuItems = [
         url: '/workflows',
       },
       {
-        title: 'Executions',
+        title: 'History',
         icon: HistoryIcon,
-        url: '/',
+        url: '/history',
       },
     ],
   },

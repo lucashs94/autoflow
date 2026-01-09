@@ -47,6 +47,37 @@ db.exec(
       createdAt INTEGER NOT NULL,
       updatedAt INTEGER NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS execution_history (
+      id TEXT PRIMARY KEY,
+      workflow_id TEXT NOT NULL,
+      workflow_name TEXT NOT NULL,
+      started_at INTEGER NOT NULL,
+      finished_at INTEGER,
+      duration INTEGER,
+      status TEXT CHECK(status IN ('running', 'success', 'failed', 'cancelled')) NOT NULL,
+      final_context TEXT,
+      error TEXT,
+      FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS node_execution_log (
+      id TEXT PRIMARY KEY,
+      execution_id TEXT NOT NULL,
+      node_id TEXT NOT NULL,
+      node_name TEXT NOT NULL,
+      node_type TEXT NOT NULL,
+      status TEXT CHECK(status IN ('loading', 'success', 'error', 'cancelled')) NOT NULL,
+      started_at INTEGER NOT NULL,
+      finished_at INTEGER,
+      duration INTEGER,
+      context_snapshot TEXT,
+      error TEXT,
+      FOREIGN KEY (execution_id) REFERENCES execution_history(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_execution_workflow ON execution_history(workflow_id, started_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_node_execution ON node_execution_log(execution_id, started_at);
   `
 )
 

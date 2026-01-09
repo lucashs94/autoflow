@@ -25,7 +25,6 @@ interface BaseTriggerNodeProps extends NodeProps {
 
 export const BaseInitialNode = memo(
   ({
-    id,
     icon: Icon,
     name,
     description,
