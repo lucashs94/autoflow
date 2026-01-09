@@ -37,6 +37,9 @@ export enum IPCErrorCode {
   WORKFLOW_NOT_FOUND = 'WORKFLOW_NOT_FOUND',
   NODE_NOT_FOUND = 'NODE_NOT_FOUND',
   INVALID_WORKFLOW = 'INVALID_WORKFLOW',
+
+  // Internal errors
+  INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
 
 /**
@@ -179,7 +182,8 @@ export function error(
       code,
       message,
       details,
-      stack: process.env.NODE_ENV === 'development' ? new Error().stack : undefined,
+      stack:
+        process.env.NODE_ENV === 'development' ? new Error().stack : undefined,
     },
   }
 }
