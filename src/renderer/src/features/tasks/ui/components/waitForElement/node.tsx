@@ -1,5 +1,6 @@
 import { BaseExecutionNode } from '@renderer/components/nodes/baseExecutionNode'
 import { useNodeStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
+import { ElementFilter } from '@renderer/features/tasks/types/filters'
 import {
   useReactFlow,
   type Node,
@@ -14,6 +15,7 @@ type NodeProps = {
   selector?: string
   shouldBe?: 'visible' | 'hidden'
   timeout?: number
+  filters?: ElementFilter[]
 }
 
 type NodeType = Node<NodeProps>

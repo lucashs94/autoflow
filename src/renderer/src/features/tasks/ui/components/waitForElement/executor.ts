@@ -1,5 +1,7 @@
 import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
+import { ElementFilter } from '@renderer/features/tasks/types/filters'
+import { filtersToSelector } from '@renderer/features/tasks/utils/filterToSelector'
 import { isSuccess } from '@shared/@types/ipc-response'
 import Handlebars from 'handlebars'
 
@@ -13,6 +15,7 @@ type ExecutorDataProps = {
   selector?: string
   shouldBe?: 'visible' | 'hidden'
   timeout?: number
+  filters?: ElementFilter[]
 }
 
 export const waitForElementNodeExecutor: NodeExecutor<
@@ -24,10 +27,27 @@ export const waitForElementNodeExecutor: NodeExecutor<
   })
 
   try {
+    if (!data.selector || !data.shouldBe) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
+
+      throw new Error(`Selector or visibility state not found`)
+    }
+
+    // Apply filters to selector if provided
+    const finalSelector =
+      data.filters && data.filters.length > 0
+        ? filtersToSelector(data.selector, data.filters)
+        : data.selector
+
+    console.log('Final selector with filters:', finalSelector)
+
     const result = await window.api.executions.waitForElement(
-      data.selector!,
-      data.shouldBe!,
-      data.timeout! * 1000
+      finalSelector,
+      data.shouldBe,
+      data.timeout
     )
 
     if (!isSuccess(result)) {

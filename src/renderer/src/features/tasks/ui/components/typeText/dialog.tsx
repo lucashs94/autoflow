@@ -18,13 +18,18 @@ import {
   FormMessage,
 } from '@renderer/components/ui/form'
 import { Input } from '@renderer/components/ui/input'
-import { useEffect } from 'react'
+import { Slider } from '@renderer/components/ui/slider'
+import { ElementFilter } from '@renderer/features/tasks/types/filters'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { FilterBuilder } from '../shared/FilterBuilder'
 
 const formSchema = z.object({
   selector: z.string().min(1, { message: 'Selector is required' }),
-  text: z.string().min(1, `Text is required`),
+  text: z.string().min(1, { message: 'Text is required' }),
+  timeout: z.coerce.number().min(1).max(60, { message: 'Should be lower than 60' }),
+  filters: z.array(z.any()).default([]),
 })
 
 export type FormValues = z.infer<typeof formSchema>
@@ -44,11 +49,17 @@ export const SettingsDialog = ({
   onSubmit,
   defaultValues = {},
 }: Props) => {
+  const [isAdvancedFiltersEnabled, setIsAdvancedFiltersEnabled] = useState(
+    Boolean(defaultValues.filters?.length)
+  )
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       selector: defaultValues.selector || '',
       text: defaultValues.text || '',
+      timeout: Number(defaultValues.timeout) || 30,
+      filters: defaultValues.filters || [],
     },
   })
 
@@ -62,6 +73,8 @@ export const SettingsDialog = ({
       form.reset({
         selector: defaultValues.selector || '',
         text: defaultValues.text || '',
+        timeout: defaultValues.timeout || 30,
+        filters: defaultValues.filters || [],
       })
     }
   }, [open, defaultValues, form])
@@ -125,6 +138,40 @@ export const SettingsDialog = ({
                   <FormMessage />
                 </FormItem>
               )}
+            />
+
+            <FormField
+              control={form.control}
+              name="timeout"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex justify-between">
+                    <FormLabel>Timeout (seconds):</FormLabel>
+
+                    {form.watch('timeout')}
+                  </div>
+
+                  <FormControl>
+                    <Slider
+                      {...field}
+                      min={1}
+                      max={60}
+                      step={1}
+                      value={[field.value || 30]}
+                      onValueChange={(value) => field.onChange(value[0])}
+                    />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FilterBuilder
+              filters={form.watch('filters') as ElementFilter[]}
+              onChange={(filters) => form.setValue('filters', filters)}
+              enabled={isAdvancedFiltersEnabled}
+              onEnabledChange={setIsAdvancedFiltersEnabled}
             />
 
             <DialogFooter className="mt-4">

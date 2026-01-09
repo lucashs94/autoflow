@@ -1,5 +1,7 @@
 import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
+import { ElementFilter } from '@renderer/features/tasks/types/filters'
+import { filtersToSelector } from '@renderer/features/tasks/utils/filterToSelector'
 import { isSuccess } from '@shared/@types/ipc-response'
 import Handlebars from 'handlebars'
 
@@ -12,6 +14,8 @@ type ExecutorDataProps = {
   name?: string
   selector?: string
   text?: string
+  timeout?: number
+  filters?: ElementFilter[]
 }
 
 export const typeTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
@@ -34,7 +38,15 @@ export const typeTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
       throw new Error(`Selector or text not found`)
     }
 
-    const result = await window.api.executions.typeText(data.selector, data.text)
+    // Apply filters to selector if provided
+    const finalSelector =
+      data.filters && data.filters.length > 0
+        ? filtersToSelector(data.selector, data.filters)
+        : data.selector
+
+    console.log('Final selector with filters:', finalSelector)
+
+    const result = await window.api.executions.typeText(finalSelector, data.text, data.timeout)
 
     if (!isSuccess(result)) {
       publishStatus({

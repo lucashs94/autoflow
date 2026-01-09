@@ -20,14 +20,17 @@ import {
 import { Input } from '@renderer/components/ui/input'
 import { Slider } from '@renderer/components/ui/slider'
 import { Switch } from '@renderer/components/ui/switch'
-import { useEffect } from 'react'
+import { ElementFilter } from '@renderer/features/tasks/types/filters'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { FilterBuilder } from '../shared/FilterBuilder'
 
 const formSchema = z.object({
   selector: z.string().min(1, { message: 'Selector is required' }),
   shouldBe: z.enum(['visible', 'hidden']),
-  timeout: z.coerce.number<number>().optional(),
+  timeout: z.coerce.number().optional(),
+  filters: z.array(z.any()).default([]),
 })
 
 export type FormValues = z.infer<typeof formSchema>
@@ -47,12 +50,17 @@ export const SettingsDialog = ({
   onSubmit,
   defaultValues = {},
 }: Props) => {
+  const [isAdvancedFiltersEnabled, setIsAdvancedFiltersEnabled] = useState(
+    Boolean(defaultValues.filters?.length)
+  )
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       selector: defaultValues.selector || '',
       shouldBe: defaultValues.shouldBe || 'visible',
       timeout: Number(defaultValues.timeout) || 30,
+      filters: defaultValues.filters || [],
     },
   })
 
@@ -67,6 +75,7 @@ export const SettingsDialog = ({
         selector: defaultValues.selector || '',
         shouldBe: defaultValues.shouldBe || 'visible',
         timeout: Number(defaultValues.timeout) || 30,
+        filters: defaultValues.filters || [],
       })
     }
   }, [open, defaultValues, form])
@@ -163,6 +172,13 @@ export const SettingsDialog = ({
                   <FormMessage />
                 </FormItem>
               )}
+            />
+
+            <FilterBuilder
+              filters={form.watch('filters') as ElementFilter[]}
+              onChange={(filters) => form.setValue('filters', filters)}
+              enabled={isAdvancedFiltersEnabled}
+              onEnabledChange={setIsAdvancedFiltersEnabled}
             />
 
             <DialogFooter className="mt-4">

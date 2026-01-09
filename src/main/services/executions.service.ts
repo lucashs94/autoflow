@@ -20,19 +20,23 @@ export async function navigateUrlService(url: string): Promise<IPCResult<void>> 
 
 export async function typeTextService(
   selector: string,
-  text: string
+  text: string,
+  timeout?: number
 ): Promise<IPCResult<void>> {
   try {
-    await instance.waitAndType({ selector, text })
+    await instance.waitAndType({ selector, text, timeout })
     return success(undefined)
   } catch (error) {
     return errorFromException(error, IPCErrorCode.ELEMENT_NOT_FOUND)
   }
 }
 
-export async function clickElementService(selector: string): Promise<IPCResult<void>> {
+export async function clickElementService(
+  selector: string,
+  timeout?: number
+): Promise<IPCResult<void>> {
   try {
-    await instance.waitAndClick({ selector })
+    await instance.waitAndClick({ selector, timeout })
     return success(undefined)
   } catch (error) {
     return errorFromException(error, IPCErrorCode.ELEMENT_NOT_FOUND)

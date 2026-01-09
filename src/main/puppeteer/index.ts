@@ -1,4 +1,4 @@
-import Puppeteer, { Browser, Page, TimeoutError } from 'puppeteer'
+import Puppeteer, { Browser, Page } from 'puppeteer'
 
 export class BrowserController {
   private static instance: BrowserController | null = null
@@ -78,7 +78,7 @@ export class BrowserController {
 
   async waitForElement({
     selector,
-    timeout = 30_000,
+    timeout,
     shouldBe,
   }: {
     selector: string
@@ -90,8 +90,11 @@ export class BrowserController {
     if (!this.page || !this.browser)
       throw new Error(`Browser or page not found`)
 
+    // Convert timeout from seconds to milliseconds, default to 30 seconds
+    const timeoutMs = timeout ? timeout * 1000 : 30_000
+
     await this.page.waitForSelector(selector, {
-      timeout,
+      timeout: timeoutMs,
       signal: this.abortController?.signal,
       visible: shouldBe === 'visible' ? true : false,
       hidden: shouldBe === 'hidden' ? true : false,
@@ -101,28 +104,42 @@ export class BrowserController {
   async waitAndType({
     selector,
     text,
+    timeout,
   }: {
     selector: string
     text: string
+    timeout?: number
   }): Promise<void> {
     if (this.shouldStop) return
 
     if (!this.page || !this.browser || !this.abortController)
       throw new Error(`Browser or page not found`)
 
-    await this.page
-      .locator(selector)
-      .fill(text, { signal: this.abortController.signal })
+    const options: any = { signal: this.abortController.signal }
+    if (timeout) {
+      options.timeout = timeout * 1000
+    }
+
+    await this.page.locator(selector).fill(text, options)
   }
 
-  async waitAndClick({ selector }: { selector: string }): Promise<void> {
+  async waitAndClick({
+    selector,
+    timeout,
+  }: {
+    selector: string
+    timeout?: number
+  }): Promise<void> {
     if (this.shouldStop) return
 
     if (!this.page || !this.browser || !this.abortController)
       throw new Error(`Browser or page not found`)
 
-    await this.page
-      .locator(selector)
-      .click({ signal: this.abortController.signal })
+    const options: any = { signal: this.abortController.signal }
+    if (timeout) {
+      options.timeout = timeout * 1000
+    }
+
+    await this.page.locator(selector).click(options)
   }
 }

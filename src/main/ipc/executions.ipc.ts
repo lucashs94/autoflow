@@ -13,12 +13,13 @@ ipcMain.handle('execution:navigateUrl', async (_, url: string) =>
 
 ipcMain.handle(
   'execution:typeText',
-  async (_, selector: string, text: string) => typeTextService(selector, text)
+  async (_, selector: string, text: string, timeout?: number) =>
+    typeTextService(selector, text, timeout)
 )
 
 ipcMain.handle(
   'execution:clickElement',
-  async (_, selector: string) => await clickElementService(selector)
+  async (_, selector: string, timeout?: number) => await clickElementService(selector, timeout)
 )
 
 ipcMain.handle(
