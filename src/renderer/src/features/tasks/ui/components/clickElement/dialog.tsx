@@ -17,9 +17,12 @@ import {
   FormLabel,
   FormMessage,
 } from '@renderer/components/ui/form'
-import { Input } from '@renderer/components/ui/input'
+import { TemplateInput } from '@renderer/components/templateInput'
 import { Slider } from '@renderer/components/ui/slider'
 import { ElementFilter } from '@renderer/features/tasks/types/filters'
+import { getAllAvailableVariables } from '@renderer/utils/getAvailableVariables'
+import { useWorkflow } from '@renderer/features/workflows/hooks/useWorkflows'
+import { useParams } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -51,6 +54,21 @@ export const SettingsDialog = ({
   const [isAdvancedFiltersEnabled, setIsAdvancedFiltersEnabled] = useState(
     Boolean(defaultValues.filters?.length)
   )
+
+  const { workflowId } = useParams({ from: '/(main)/workflows/$workflowId/' })
+  const { data: workflow } = useWorkflow(workflowId)
+
+  // Calculate available variables for autocomplete
+  const availableVariables =
+    workflow && workflow.nodes && workflow.edges
+      ? getAllAvailableVariables(nodeId, workflow.nodes, workflow.edges)
+      : []
+
+  // Debug log
+  useEffect(() => {
+    console.log('[ClickElement Dialog] Workflow:', workflow)
+    console.log('[ClickElement Dialog] Available variables:', availableVariables)
+  }, [workflow, availableVariables])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -106,10 +124,11 @@ export const SettingsDialog = ({
                   {/* Add info tooltip */}
 
                   <FormControl>
-                    <Input
+                    <TemplateInput
                       {...field}
+                      availableVariables={availableVariables}
                       className=" bg-input/90!"
-                      placeholder=".class"
+                      placeholder=".class or {{ variable }}"
                     />
                   </FormControl>
 

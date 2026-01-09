@@ -99,6 +99,7 @@ export async function executeWorkflow(
           nodeId: node.id,
           workflowId,
           signal,
+          executionId,
         })
 
         // Log successful node execution

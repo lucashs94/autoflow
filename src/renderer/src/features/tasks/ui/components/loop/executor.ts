@@ -18,6 +18,7 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
   nodeId,
   workflowId,
   signal,
+  executionId,
 }) => {
   const start = performance.now()
 
@@ -128,14 +129,53 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
         if (node.type === NodeType.LOOP && node.id === nodeId) continue
 
         const executor = getExecutor(node.type as NodeType)
+        const nodeStartTime = Date.now()
 
-        internalContext = await executor({
-          data: node.data as Record<string, unknown>,
-          context: internalContext,
-          nodeId: node.id,
-          workflowId,
-          signal, // Pass signal to nested executors
-        })
+        try {
+          internalContext = await executor({
+            data: node.data as Record<string, unknown>,
+            context: internalContext,
+            nodeId: node.id,
+            workflowId,
+            signal,
+            executionId,
+          })
+
+          // Log successful node execution inside loop
+          if (executionId) {
+            await window.api.history.logNodeExecution({
+              id: crypto.randomUUID(),
+              execution_id: executionId,
+              node_id: node.id,
+              node_name: (node.data as any).name || node.type || 'unknown',
+              node_type: node.type || 'unknown',
+              status: 'success',
+              started_at: nodeStartTime,
+              finished_at: Date.now(),
+              duration: Date.now() - nodeStartTime,
+              context_snapshot: internalContext,
+            })
+          }
+        } catch (error) {
+          // Log failed node execution inside loop
+          if (executionId) {
+            await window.api.history.logNodeExecution({
+              id: crypto.randomUUID(),
+              execution_id: executionId,
+              node_id: node.id,
+              node_name: (node.data as any).name || node.type || 'unknown',
+              node_type: node.type || 'unknown',
+              status: 'error',
+              started_at: nodeStartTime,
+              finished_at: Date.now(),
+              duration: Date.now() - nodeStartTime,
+              context_snapshot: internalContext,
+              error: error instanceof Error ? error.message : String(error),
+            })
+          }
+
+          throw error
+        }
       }
 
       const { [data.name!]: _, ...rest } = internalContext
