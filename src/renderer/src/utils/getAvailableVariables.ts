@@ -1,6 +1,92 @@
 import { NodeType } from '@renderer/types/nodes'
 import { Edge, Node as FlowNode } from '@xyflow/react'
 
+export interface VariableInfo {
+  name: string
+  nodeType?: NodeType
+  properties: string[]
+}
+
+/**
+ * Get properties available for a node type
+ */
+function getPropertiesForNodeType(nodeType: NodeType): string[] {
+  switch (nodeType) {
+    case NodeType.CLICK_ELEMENT:
+    case NodeType.WAIT_FOR_ELEMENT:
+      return ['element', 'selector']
+    case NodeType.TYPE_TEXT:
+      return ['text', 'selector']
+    case NodeType.NAVIGATION:
+      return ['url']
+    case NodeType.LOOP:
+      return ['item', 'index', 'length']
+    case NodeType.SET_VARIABLES:
+      return []
+    // case NodeType.EXTRACT_DATA:
+    //   return ['data', 'value', 'text']
+    default:
+      return ['data', 'result']
+  }
+}
+
+/**
+ * Get available template variables with their property information
+ */
+export function getAvailableVariablesWithInfo(
+  currentNodeId: string,
+  nodes: FlowNode[],
+  edges: Edge[]
+): Map<string, VariableInfo> {
+  const variablesMap = new Map<string, VariableInfo>()
+
+  // Find all nodes that come before the current node
+  const previousNodes = getNodesBeforeCurrent(currentNodeId, nodes, edges)
+
+  previousNodes.forEach((node) => {
+    const nodeName = (node.data as any)?.name
+    if (nodeName && nodeName !== 'Initial' && node.type !== NodeType.INITIAL) {
+      variablesMap.set(nodeName, {
+        name: nodeName,
+        nodeType: node.type as NodeType,
+        properties: getPropertiesForNodeType(node.type as NodeType),
+      })
+    }
+
+    // Extract variables from SetVariables nodes
+    if (node.type === NodeType.SET_VARIABLES) {
+      const data = node.data as any
+      if (data.variables && Array.isArray(data.variables)) {
+        data.variables.forEach((v: any) => {
+          if (v.name) {
+            variablesMap.set(v.name, {
+              name: v.name,
+              properties: [],
+            })
+          }
+        })
+      }
+    }
+  })
+
+  // Check if current node is inside a loop
+  const loopContext = getLoopContext(currentNodeId, nodes, edges)
+  if (loopContext) {
+    variablesMap.set(`${loopContext}.item`, {
+      name: `${loopContext}.item`,
+      nodeType: NodeType.LOOP,
+      properties: [],
+    })
+    variablesMap.set(`${loopContext}.index`, {
+      name: `${loopContext}.index`,
+      nodeType: NodeType.LOOP,
+      properties: [],
+    })
+  }
+
+  return variablesMap
+}
+
 /**
  * Get available template variables based on workflow topology
  * Returns variables that are available at a given node
