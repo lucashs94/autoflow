@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { FieldEditChange } from '@renderer/components/fieldEditChange'
+import { TemplateInput } from '@renderer/components/templateInput'
 import { Button } from '@renderer/components/ui/button'
 import {
   Dialog,
@@ -18,7 +19,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@renderer/components/ui/form'
-import { Input } from '@renderer/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -27,18 +27,17 @@ import {
   SelectValue,
 } from '@renderer/components/ui/select'
 import { Textarea } from '@renderer/components/ui/textarea'
-import { useEffect } from 'react'
+import { useWorkflow } from '@renderer/features/workflows/hooks/useWorkflows'
+import {
+  getAllAvailableVariables,
+  getAvailableVariablesWithInfo,
+} from '@renderer/utils/getAvailableVariables'
+import { useParams } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 const formSchema = z.object({
-  // name: z
-  //   .string()
-  //   .min(1, 'Name is required')
-  //   .regex(
-  //     /^[A-Za-z_$][A-Za-z0-9_$]*$/,
-  //     'Name must start with letters or underscore and contain only letters, numbers and underscore'
-  //   ),
   endpoint: z.string().min(1, { message: 'Please enter a valid URL' }),
   method: z.enum(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']),
   body: z.string().optional(),
@@ -61,7 +60,24 @@ export const HttpRequestDialog = ({
   onSubmit,
   defaultValues = {},
 }: Props) => {
-  const form = useForm<z.infer<typeof formSchema>>({
+  const [isEndpointValid, setIsEndpointValid] = useState(true)
+
+  const { workflowId } = useParams({ from: '/(main)/workflows/$workflowId/' })
+  const { data: workflow } = useWorkflow(workflowId)
+
+  // Calculate available variables for autocomplete
+  const availableVariables =
+    workflow && workflow.nodes && workflow.edges
+      ? getAllAvailableVariables(nodeId, workflow.nodes, workflow.edges)
+      : []
+
+  // Get variable info with properties
+  const variablesInfo =
+    workflow && workflow.nodes && workflow.edges
+      ? getAvailableVariablesWithInfo(nodeId, workflow.nodes, workflow.edges)
+      : undefined
+
+  const form = useForm<HttpRequestFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       endpoint: defaultValues.endpoint || '',
@@ -87,6 +103,8 @@ export const HttpRequestDialog = ({
         method: defaultValues.method || 'GET',
         body: defaultValues.body || '',
       })
+      // Reset validation state
+      setIsEndpointValid(true)
     }
   }, [open, defaultValues, form])
 
@@ -110,13 +128,13 @@ export const HttpRequestDialog = ({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-8"
+            className="space-y-6 mt-4"
           >
             <FormField
               control={form.control}
               name="method"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="bg-card! p-4 pb-6 rounded-lg gap-2 flex flex-col">
                   <FormLabel>Method</FormLabel>
 
                   <Select
@@ -151,14 +169,19 @@ export const HttpRequestDialog = ({
               control={form.control}
               name="endpoint"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="bg-card! p-4 pb-6 rounded-lg gap-2 flex flex-col">
                   <FormLabel>Endpoint</FormLabel>
 
                   <FormControl>
-                    <Input
+                    <TemplateInput
                       {...field}
-                      className=" bg-input/90!"
-                      placeholder="https://api.example.com/users/{{httpResponse.data.id}}"
+                      availableVariables={availableVariables}
+                      variablesInfo={variablesInfo}
+                      onValidationChange={(isValid) => {
+                        setIsEndpointValid(isValid)
+                      }}
+                      className="bg-input/90!"
+                      placeholder="https://api.example.com/users/{{ variable }}"
                     />
                   </FormControl>
 
@@ -177,13 +200,13 @@ export const HttpRequestDialog = ({
                 control={form.control}
                 name="body"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="bg-card! p-4 pb-6 rounded-lg gap-2 flex flex-col">
                     <FormLabel>Request Body</FormLabel>
 
                     <FormControl>
                       <Textarea
                         {...field}
-                        className="min-h-[120px] font-mono text-sm"
+                        className="min-h-[120px] font-mono text-sm bg-input/90!"
                         placeholder={
                           '{\n  "userId": "{{httpResponse.data.id}}",\n  "name": "{{httpResponse.data.name}}",\n  "items": "{{httpResponse.data.items}}"\n}'
                         }
@@ -203,7 +226,7 @@ export const HttpRequestDialog = ({
             )}
 
             <DialogFooter className="mt-4">
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={!isEndpointValid}>Save</Button>
             </DialogFooter>
           </form>
         </Form>

@@ -1,12 +1,7 @@
-import Handlebars from 'handlebars'
 import ky, { Options as KyOptions } from 'ky'
 import { publishStatus } from '../../../channels/nodeStatusChannel'
 import { NodeExecutor } from '../../../types/types'
-
-Handlebars.registerHelper('json', (context) => {
-  const jsonString = JSON.stringify(context, null, 2)
-  return new Handlebars.SafeString(jsonString)
-})
+import { compileTemplate } from '@renderer/lib/handleBars'
 
 type ExecutorDataProps = {
   name?: string
@@ -49,7 +44,9 @@ export const httpRequestExecutor: NodeExecutor<ExecutorDataProps> = async ({
       }
 
       const method = data.method
-      const endpoint = data.endpoint
+
+      // Resolve templates in endpoint and body
+      const resolvedEndpoint = compileTemplate(data.endpoint)(context)
 
       const options: KyOptions = {
         method,
@@ -58,17 +55,17 @@ export const httpRequestExecutor: NodeExecutor<ExecutorDataProps> = async ({
 
       if (['POST', 'PUT', 'PATCH'].includes(method)) {
         if (data.body) {
-          const resolved = data.body || '{}'
-          JSON.parse(resolved)
+          const resolvedBody = compileTemplate(data.body)(context)
+          JSON.parse(resolvedBody)
 
-          options.body = resolved
+          options.body = resolvedBody
           options.headers = {
             'Content-Type': 'application/json',
           }
         }
       }
 
-      const response = await ky(endpoint, options)
+      const response = await ky(resolvedEndpoint, options)
       const contentType = response.headers.get('content-type')
       const responseData = contentType?.includes('application/json')
         ? await response.json()
