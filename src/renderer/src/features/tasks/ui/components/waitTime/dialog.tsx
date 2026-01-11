@@ -25,7 +25,7 @@ import { z } from 'zod'
 
 const formSchema = z.object({
   time: z.coerce
-    .number<number>()
+    .number()
     .min(1, { message: 'Time is required' })
     .max(60, { message: 'Time must be less than 60 seconds' }),
 })

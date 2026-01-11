@@ -1,11 +1,6 @@
 import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
-import Handlebars from 'handlebars'
-
-Handlebars.registerHelper('json', (context) => {
-  const jsonString = JSON.stringify(context, null, 2)
-  return new Handlebars.SafeString(jsonString)
-})
+import { compileTemplate } from '@renderer/lib/handleBars'
 
 type ExecutorDataProps = {
   name?: string
@@ -24,7 +19,7 @@ export const waitTimeNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
   })
 
   try {
-    if (!Number(data.time)) {
+    if (!data.time) {
       publishStatus({
         nodeId,
         status: 'error',
@@ -33,9 +28,22 @@ export const waitTimeNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
       throw new Error(`timeInSeconds is required`)
     }
 
+    // Resolve template in time (can be a number or template string)
+    const resolvedTime = compileTemplate(String(data.time))(context)
+    const timeInSeconds = Number(resolvedTime)
+
+    if (!timeInSeconds || isNaN(timeInSeconds)) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
+
+      throw new Error(`timeInSeconds must be a valid number`)
+    }
+
     // Make wait time cancellable
     await new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(resolve, Number(data.time) * 1_000)
+      const timeoutId = setTimeout(resolve, timeInSeconds * 1_000)
 
       // Listen for abort signal
       if (signal) {
