@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { FieldEditChange } from '@renderer/components/fieldEditChange'
+import { TemplateInput } from '@renderer/components/templateInput'
 import { Button } from '@renderer/components/ui/button'
 import {
   Dialog,
@@ -18,8 +19,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@renderer/components/ui/form'
-import { Input } from '@renderer/components/ui/input'
-import { useEffect } from 'react'
+import { useWorkflow } from '@renderer/features/workflows/hooks/useWorkflows'
+import {
+  getAllAvailableVariables,
+  getAvailableVariablesWithInfo,
+} from '@renderer/utils/getAvailableVariables'
+import { useParams } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -44,7 +50,24 @@ export const SettingsDialog = ({
   onSubmit,
   defaultValues = {},
 }: Props) => {
-  const form = useForm<z.infer<typeof formSchema>>({
+  const [isUrlValid, setIsUrlValid] = useState(true)
+
+  const { workflowId } = useParams({ from: '/(main)/workflows/$workflowId/' })
+  const { data: workflow } = useWorkflow(workflowId)
+
+  // Calculate available variables for autocomplete
+  const availableVariables =
+    workflow && workflow.nodes && workflow.edges
+      ? getAllAvailableVariables(nodeId, workflow.nodes, workflow.edges)
+      : []
+
+  // Get variable info with properties
+  const variablesInfo =
+    workflow && workflow.nodes && workflow.edges
+      ? getAvailableVariablesWithInfo(nodeId, workflow.nodes, workflow.edges)
+      : undefined
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       url: defaultValues.url || '',
@@ -61,6 +84,8 @@ export const SettingsDialog = ({
       form.reset({
         url: defaultValues.url || '',
       })
+      // Reset validation state
+      setIsUrlValid(true)
     }
   }, [open, defaultValues, form])
 
@@ -83,20 +108,25 @@ export const SettingsDialog = ({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-8"
+            className="space-y-6 mt-4"
           >
             <FormField
               control={form.control}
               name="url"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="bg-card! p-4 pb-6 rounded-lg gap-2 flex flex-col">
                   <FormLabel>URL</FormLabel>
 
                   <FormControl>
-                    <Input
+                    <TemplateInput
                       {...field}
-                      className=" bg-input/90!"
-                      placeholder="https://example.com/"
+                      availableVariables={availableVariables}
+                      variablesInfo={variablesInfo}
+                      onValidationChange={(isValid) => {
+                        setIsUrlValid(isValid)
+                      }}
+                      className="bg-input/90!"
+                      placeholder="https://example.com/ or use {{ variable }}"
                     />
                   </FormControl>
 
@@ -111,7 +141,7 @@ export const SettingsDialog = ({
             />
 
             <DialogFooter className="mt-4">
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={!isUrlValid}>Save</Button>
             </DialogFooter>
           </form>
         </Form>
