@@ -126,11 +126,11 @@ export function Editor({ workflowId }: { workflowId: string }) {
         onInit={setEditorInstance}
         deleteKeyCode={['Backspace', 'Delete']}
         fitView
+        snapToGrid
+        snapGrid={[10, 10]}
         proOptions={{
           hideAttribution: true,
         }}
-        snapToGrid
-        snapGrid={[10, 10]}
       >
         <Background />
         <Controls
