@@ -1,6 +1,7 @@
 import { BaseExecutionNode } from '@renderer/components/nodes/baseExecutionNode'
 import { useNodeStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { ElementFilter } from '@renderer/features/tasks/types/filters'
+import { SelectorType } from '@renderer/types/selectorTypes'
 import {
   useReactFlow,
   type Node,
@@ -13,6 +14,7 @@ import { FormValues, SettingsDialog } from './dialog'
 type NodeProps = {
   name: string
   selector?: string
+  selectorType?: SelectorType
   timeout?: number
   filters?: ElementFilter[]
 }
