@@ -1,251 +1,333 @@
-import { Input } from '@renderer/components/ui/input'
 import { cn } from '@renderer/lib/utils'
-import { BracesIcon } from 'lucide-react'
-import { forwardRef, useEffect, useRef, useState } from 'react'
+import { VariableInfo } from '@renderer/utils/getAvailableVariables'
+import { forwardRef, useEffect, useRef, useImperativeHandle, useState } from 'react'
+import { EditorView, Decoration, DecorationSet, ViewUpdate, ViewPlugin, drawSelection, keymap } from '@codemirror/view'
+import { EditorState, Extension } from '@codemirror/state'
+import { autocompletion, CompletionContext, CompletionResult, completionKeymap } from '@codemirror/autocomplete'
+import { defaultKeymap } from '@codemirror/commands'
 
-interface TemplateInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface TemplateInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   availableVariables?: string[]
-  onVariableSelect?: (variable: string) => void
+  variablesInfo?: Map<string, VariableInfo>
+  value?: string
+  onChange?: (value: string) => void
+  onValidationChange?: (isValid: boolean, error?: string) => void
 }
 
+// Função de validação de template
+export function validateTemplate(
+  value: string,
+  availableVariables: string[],
+  variablesInfo?: Map<string, VariableInfo>
+): { isValid: boolean; error?: string } {
+  if (!value || value.trim() === '') {
+    return { isValid: true }
+  }
+
+  // Verificar se há {{ sem }} correspondente ou vice-versa
+  const openBracesCount = (value.match(/\{\{/g) || []).length
+  const closeBracesCount = (value.match(/\}\}/g) || []).length
+
+  if (openBracesCount !== closeBracesCount) {
+    return { isValid: false, error: 'Template syntax error: mismatched {{ }}' }
+  }
+
+  // Regex para encontrar todas as expressões {{ }}
+  const templateRegex = /\{\{([^}]*)\}\}/g
+  const matches = [...value.matchAll(templateRegex)]
+
+  // Verificar se todas as variáveis e propriedades usadas estão disponíveis
+  for (const match of matches) {
+    const content = match[1].trim()
+
+    // Pode estar vazio ({{ }}) - isso é válido mas será tratado pelo handlebars
+    if (content === '') continue
+
+    // Verificar se tem propriedade (ponto)
+    const dotIndex = content.indexOf('.')
+
+    if (dotIndex !== -1) {
+      // Tem propriedade: {{ nodeName.property }}
+      const varName = content.substring(0, dotIndex).trim()
+      const propertyPath = content.substring(dotIndex + 1).trim()
+
+      // Verificar se a variável existe
+      if (!availableVariables.includes(varName)) {
+        return { isValid: false, error: `Variable "${varName}" is not available. Use autocomplete to see available variables.` }
+      }
+
+      // Verificar se a propriedade existe (se temos info sobre a variável)
+      if (variablesInfo && propertyPath) {
+        const varInfo = variablesInfo.get(varName)
+        if (varInfo && varInfo.properties) {
+          const firstProperty = propertyPath.split('.')[0].trim()
+          if (!varInfo.properties.includes(firstProperty)) {
+            return { isValid: false, error: `Property "${firstProperty}" does not exist in "${varName}". Use autocomplete to see available properties.` }
+          }
+        }
+      }
+    } else {
+      // Apenas variável: {{ nodeName }}
+      const varName = content.trim()
+
+      if (!availableVariables.includes(varName)) {
+        return { isValid: false, error: `Variable "${varName}" is not available. Use autocomplete to see available variables.` }
+      }
+    }
+  }
+
+  return { isValid: true }
+}
+
+// Theme
+const createTheme = (): Extension => {
+  return EditorView.theme({
+    '&': {
+      width: '100%',
+      backgroundColor: 'transparent',
+      fontSize: '14px',
+      fontFamily: 'var(--font-mono)',
+      cursor: 'text'
+    },
+    '.cm-scroller': {
+      fontFamily: 'var(--font-mono)',
+      cursor: 'text',
+      maxHeight: '72px', // ~3 lines at 14px font
+      overflowY: 'auto'
+    },
+    '.cm-content': {
+      padding: '8px 12px',
+      fontFamily: 'var(--font-mono)',
+      caretColor: 'hsl(var(--foreground))',
+      minHeight: '20px',
+      cursor: 'text',
+      lineHeight: '1.5'
+    },
+    '.cm-line': {
+      padding: 0,
+      fontFamily: 'var(--font-mono)',
+      cursor: 'text',
+      lineHeight: '1.5'
+    },
+    '&.cm-focused': {
+      outline: 'none'
+    },
+    '.cm-template-variable': {
+      color: '#22c55e',
+      fontWeight: '600',
+      backgroundColor: 'rgba(34, 197, 94, 0.1)',
+      borderRadius: '2px',
+      padding: '0 2px'
+    },
+    '.cm-tooltip.cm-tooltip-autocomplete': {
+      backgroundColor: '#ffffff',
+      border: '1px solid #e5e7eb',
+      borderRadius: '6px',
+      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+      fontFamily: 'var(--font-mono)',
+      padding: '6px',
+      overflow: 'hidden',
+      maxWidth: '400px'
+    },
+    '.cm-tooltip.cm-tooltip-autocomplete > ul': {
+      fontFamily: 'var(--font-mono)',
+      maxHeight: '240px',
+      backgroundColor: '#ffffff',
+      margin: '0',
+      padding: '0'
+    },
+    '.cm-tooltip-autocomplete ul li': {
+      padding: '12px 16px',
+      borderRadius: '4px',
+      color: '#374151',
+      fontWeight: '500',
+      backgroundColor: '#ffffff',
+      cursor: 'pointer',
+      fontSize: '13px'
+    },
+    '.cm-tooltip-autocomplete ul li:hover': {
+      backgroundColor: '#f3f4f6'
+    },
+    '.cm-tooltip-autocomplete ul li[aria-selected]': {
+      backgroundColor: '#22c55e',
+      color: '#ffffff'
+    }
+  })
+}
+
+// Highlight {{ }}
+const templateHighlighter = ViewPlugin.fromClass(class {
+  decorations: DecorationSet
+
+  constructor(view: EditorView) {
+    this.decorations = this.buildDecorations(view)
+  }
+
+  update(update: ViewUpdate) {
+    if (update.docChanged || update.viewportChanged) {
+      this.decorations = this.buildDecorations(update.view)
+    }
+  }
+
+  buildDecorations(view: EditorView): DecorationSet {
+    const decorations: any[] = []
+    const text = view.state.doc.toString()
+    const regex = /\{\{[^}]*\}\}/g
+    let match
+
+    while ((match = regex.exec(text)) !== null) {
+      const from = match.index
+      const to = from + match[0].length
+      decorations.push(
+        Decoration.mark({
+          class: 'cm-template-variable'
+        }).range(from, to)
+      )
+    }
+
+    return Decoration.set(decorations)
+  }
+}, {
+  decorations: v => v.decorations
+})
+
 export const TemplateInput = forwardRef<HTMLInputElement, TemplateInputProps>(
-  ({ availableVariables = [], className, value, onChange, ...props }, ref) => {
-    const [showAutocomplete, setShowAutocomplete] = useState(false)
-    const [cursorPosition, setCursorPosition] = useState(0)
-    const [filteredVariables, setFilteredVariables] = useState<string[]>([])
-    const [selectedIndex, setSelectedIndex] = useState(0)
-    const inputRef = useRef<HTMLInputElement>(null)
+  ({ availableVariables = [], variablesInfo, className, value = '', onChange, placeholder, onValidationChange }, ref) => {
+    const containerRef = useRef<HTMLDivElement>(null)
+    const viewRef = useRef<EditorView | null>(null)
+    const varsRef = useRef(availableVariables)
+    const varsInfoRef = useRef(variablesInfo)
+    const [hasError, setHasError] = useState(false)
 
-    // Debug log available variables
+    varsRef.current = availableVariables
+    varsInfoRef.current = variablesInfo
+
+    // Validar quando o valor mudar
     useEffect(() => {
-      console.log('[TemplateInput] Available variables:', availableVariables)
-    }, [availableVariables])
+      const validation = validateTemplate(value, availableVariables, variablesInfo)
+      setHasError(!validation.isValid)
+      onValidationChange?.(validation.isValid, validation.error)
+    }, [value, availableVariables, variablesInfo, onValidationChange])
 
-    // Detect {{ typing
+    useImperativeHandle(ref, () => ({
+      focus: () => viewRef.current?.focus(),
+      blur: () => viewRef.current?.contentDOM.blur(),
+      value: viewRef.current?.state.doc.toString() || ''
+    } as any))
+
     useEffect(() => {
-      const input = inputRef.current
-      if (!input || typeof value !== 'string') return
+      if (!containerRef.current || viewRef.current) return
 
-      const text = value as string
-      const cursorPos = input.selectionStart || 0
+      const completionSource = (context: CompletionContext): CompletionResult | null => {
+        const word = context.matchBefore(/\{\{\s*[\w\s.]*/)
+        if (!word) return null
 
-      // Look for {{ before cursor
-      const textBeforeCursor = text.substring(0, cursorPos)
-      const lastOpenBraces = textBeforeCursor.lastIndexOf('{{')
+        const text = word.text
+        if (!text.startsWith('{{')) return null
 
-      if (lastOpenBraces !== -1) {
-        const textAfterBraces = textBeforeCursor.substring(lastOpenBraces + 2)
-        const hasClosingBraces = textAfterBraces.includes('}}')
+        const afterBraces = text.substring(2).trim()
+        const dotIndex = afterBraces.lastIndexOf('.')
 
-        if (!hasClosingBraces) {
-          // Show autocomplete
-          const searchQuery = textAfterBraces.trim()
-          const filtered = availableVariables.filter(v =>
-            v.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-          console.log('[TemplateInput] Search query:', searchQuery, 'Filtered:', filtered)
-          setFilteredVariables(filtered)
-          setShowAutocomplete(filtered.length > 0)
-          setSelectedIndex(0)
-          return
+        if (dotIndex !== -1) {
+          // Property autocomplete
+          const nodeName = afterBraces.substring(0, dotIndex).trim()
+          const varInfo = varsInfoRef.current?.get(nodeName)
+          const properties = varInfo?.properties || []
+
+          return {
+            from: word.from + text.lastIndexOf('.') + 1,
+            options: properties.map(prop => ({
+              label: prop,
+              type: 'property',
+              apply: `${prop} }}`
+            }))
+          }
+        } else {
+          // Variable autocomplete
+          return {
+            from: word.from + 2,
+            options: varsRef.current.map(v => ({
+              label: v,
+              type: 'variable',
+              apply: ` ${v} }}`
+            }))
+          }
         }
       }
 
-      setShowAutocomplete(false)
-    }, [value, availableVariables, cursorPosition])
+      const state = EditorState.create({
+        doc: value,
+        extensions: [
+          drawSelection(),
+          createTheme(),
+          keymap.of([...completionKeymap, ...defaultKeymap]),
+          templateHighlighter,
+          autocompletion({
+            override: [completionSource],
+            activateOnTyping: true,
+            closeOnBlur: true,
+            maxRenderedOptions: 20
+          }),
+          EditorView.lineWrapping,
+          EditorView.updateListener.of((update) => {
+            if (update.docChanged) {
+              onChange?.(update.state.doc.toString())
+            }
+          }),
+          EditorView.contentAttributes.of({
+            'aria-placeholder': placeholder || '',
+            'data-placeholder': placeholder || ''
+          })
+        ]
+      })
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (!showAutocomplete || filteredVariables.length === 0) {
-        if (props.onKeyDown) props.onKeyDown(e)
-        return
+      const view = new EditorView({
+        state,
+        parent: containerRef.current
+      })
+
+      viewRef.current = view
+
+      return () => {
+        view.destroy()
+        viewRef.current = null
       }
+    }, [])
 
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault()
-          setSelectedIndex(prev =>
-            prev < filteredVariables.length - 1 ? prev + 1 : 0
-          )
-          break
-        case 'ArrowUp':
-          e.preventDefault()
-          setSelectedIndex(prev =>
-            prev > 0 ? prev - 1 : filteredVariables.length - 1
-          )
-          break
-        case 'Enter':
-        case 'Tab':
-          e.preventDefault()
-          insertVariable(filteredVariables[selectedIndex])
-          break
-        case 'Escape':
-          e.preventDefault()
-          setShowAutocomplete(false)
-          break
-        default:
-          if (props.onKeyDown) props.onKeyDown(e)
+    useEffect(() => {
+      if (!viewRef.current) return
+      const current = viewRef.current.state.doc.toString()
+      if (current !== value) {
+        viewRef.current.dispatch({
+          changes: { from: 0, to: current.length, insert: value }
+        })
       }
-    }
-
-    const insertVariable = (variable: string) => {
-      const input = inputRef.current
-      if (!input || typeof value !== 'string') return
-
-      const text = value as string
-      const cursorPos = input.selectionStart || 0
-      const textBeforeCursor = text.substring(0, cursorPos)
-      const lastOpenBraces = textBeforeCursor.lastIndexOf('{{')
-
-      if (lastOpenBraces !== -1) {
-        const beforeBraces = text.substring(0, lastOpenBraces)
-        const afterCursor = text.substring(cursorPos)
-        const newValue = `${beforeBraces}{{ ${variable} }}${afterCursor}`
-
-        // Trigger onChange
-        const event = {
-          target: { value: newValue }
-        } as React.ChangeEvent<HTMLInputElement>
-
-        if (onChange) onChange(event)
-
-        // Update cursor position
-        setTimeout(() => {
-          const newCursorPos = lastOpenBraces + variable.length + 6
-          input.setSelectionRange(newCursorPos, newCursorPos)
-          input.focus()
-        }, 0)
-      }
-
-      setShowAutocomplete(false)
-    }
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (onChange) onChange(e)
-      setCursorPosition(e.target.selectionStart || 0)
-    }
-
-    const handleClick = (e: React.MouseEvent<HTMLInputElement>) => {
-      setCursorPosition(e.currentTarget.selectionStart || 0)
-      if (props.onClick) props.onClick(e)
-    }
-
-    // Render with syntax highlighting
-    const renderHighlightedValue = () => {
-      if (typeof value !== 'string') return null
-
-      const text = value as string
-      const parts: { text: string; isVariable: boolean }[] = []
-      const regex = /(\{\{[^}]*\}\})/g
-      let lastIndex = 0
-      let match
-
-      while ((match = regex.exec(text)) !== null) {
-        // Add text before match
-        if (match.index > lastIndex) {
-          parts.push({ text: text.substring(lastIndex, match.index), isVariable: false })
-        }
-        // Add matched variable
-        parts.push({ text: match[0], isVariable: true })
-        lastIndex = match.index + match[0].length
-      }
-
-      // Add remaining text
-      if (lastIndex < text.length) {
-        parts.push({ text: text.substring(lastIndex), isVariable: false })
-      }
-
-      return parts
-    }
-
-    const hasVariables = typeof value === 'string' && value.includes('{{')
+    }, [value])
 
     return (
-      <div className="relative">
-        <div className="relative">
-          <Input
-            ref={(node) => {
-              // @ts-ignore
-              inputRef.current = node
-              if (typeof ref === 'function') {
-                ref(node)
-              } else if (ref) {
-                ref.current = node
-              }
-            }}
-            value={value}
-            onChange={handleChange}
-            onClick={handleClick}
-            onKeyDown={handleKeyDown}
-            className={cn(hasVariables && 'text-transparent caret-black', className)}
-            {...props}
-          />
-
-          {/* Syntax highlighting overlay */}
-          {hasVariables && (
-            <div
-              className="absolute inset-0 pointer-events-none px-3 py-2 text-sm flex items-center overflow-hidden whitespace-nowrap"
-              style={{
-                font: 'inherit',
-                letterSpacing: 'inherit'
-              }}
-            >
-              {renderHighlightedValue()?.map((part, index) => (
-                <span
-                  key={index}
-                  className={cn(
-                    part.isVariable && 'text-primary font-medium bg-primary/10 px-1 rounded'
-                  )}
-                >
-                  {part.text}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Template icon indicator */}
-          {hasVariables && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              <BracesIcon className="w-4 h-4 text-primary" />
-            </div>
-          )}
-        </div>
-
-        {/* Autocomplete popover */}
-        {showAutocomplete && filteredVariables.length > 0 && (
-          <div
-            className="absolute z-[100] mt-1 w-full min-w-[200px] bg-popover border border-border rounded-md shadow-xl"
-            style={{
-              maxHeight: '200px',
-              overflowY: 'auto',
-              top: '100%',
-              left: 0,
-            }}
-          >
-            <div className="p-1">
-              <div className="px-3 py-1 text-xs text-muted-foreground border-b border-border mb-1">
-                Available variables ({filteredVariables.length})
-              </div>
-              {filteredVariables.map((variable, index) => (
-                <button
-                  key={variable}
-                  type="button"
-                  onClick={() => insertVariable(variable)}
-                  className={cn(
-                    'w-full text-left px-3 py-2 rounded text-sm transition-colors',
-                    'hover:bg-accent hover:text-accent-foreground',
-                    index === selectedIndex && 'bg-accent text-accent-foreground'
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <BracesIcon className="w-3 h-3 text-muted-foreground" />
-                    <span className="font-mono">{variable}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
+      <>
+        {hasError && (
+          <style>{`
+            .template-input-error .cm-template-variable {
+              color: #ef4444 !important;
+              background-color: rgba(239, 68, 68, 0.15) !important;
+              font-weight: 600;
+              border-radius: 2px;
+              padding: 0 2px;
+            }
+          `}</style>
         )}
-      </div>
+        <div
+          ref={containerRef}
+          onClick={() => viewRef.current?.focus()}
+          className={cn(
+            'flex min-h-9 w-full rounded-md border border-input bg-transparent shadow-xs cursor-text',
+            'focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]',
+            hasError && 'template-input-error',
+            className
+          )}
+        />
+      </>
     )
   }
 )
