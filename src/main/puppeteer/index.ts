@@ -87,18 +87,52 @@ export class BrowserController {
   }): Promise<void> {
     if (this.shouldStop) return
 
-    if (!this.page || !this.browser)
+    if (!this.page || !this.browser || !this.abortController)
       throw new Error(`Browser or page not found`)
 
-    // Convert timeout from seconds to milliseconds, default to 30 seconds
-    const timeoutMs = timeout ? timeout * 1000 : 30_000
+    const options: any = { signal: this.abortController.signal }
+    if (timeout) {
+      options.timeout = timeout * 1000
+    }
 
-    await this.page.waitForSelector(selector, {
-      timeout: timeoutMs,
-      signal: this.abortController?.signal,
-      visible: shouldBe === 'visible' ? true : false,
-      hidden: shouldBe === 'hidden' ? true : false,
-    })
+    const locator = this.page.locator(selector)
+
+    if (shouldBe === 'visible') {
+      // Wait for element to be visible
+      await locator.wait(options)
+    } else {
+      // Wait for element to be hidden
+      // We use waitForFunction to check if element is not visible
+      const timeoutMs = timeout ? timeout * 1000 : 30000
+
+      await this.page.waitForFunction(
+        (sel) => {
+          // Check if selector is XPath
+          if (sel.startsWith('xpath/')) {
+            const xpath = sel.replace('xpath/', '')
+            const result = document.evaluate(
+              xpath,
+              document,
+              null,
+              XPathResult.FIRST_ORDERED_NODE_TYPE,
+              null
+            )
+            const element = result.singleNodeValue as HTMLElement
+            if (!element) return true // Element doesn't exist = hidden
+            const style = window.getComputedStyle(element)
+            return style.display === 'none' || style.visibility === 'hidden' || element.offsetParent === null
+          } else {
+            // CSS selector
+            const element = document.querySelector(sel)
+            if (!element) return true // Element doesn't exist = hidden
+            const style = window.getComputedStyle(element)
+            return style.display === 'none' || style.visibility === 'hidden' || (element as HTMLElement).offsetParent === null
+          }
+        },
+        { timeout: timeoutMs, signal: this.abortController.signal },
+        selector
+      )
+    }
   }
 
   async waitAndType({
