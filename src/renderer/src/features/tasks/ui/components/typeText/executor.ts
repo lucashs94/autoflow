@@ -3,16 +3,16 @@ import { NodeExecutor } from '@renderer/features/tasks/types/types'
 import { ElementFilter } from '@renderer/features/tasks/types/filters'
 import { filtersToSelector } from '@renderer/features/tasks/utils/filterToSelector'
 import { isSuccess } from '@shared/@types/ipc-response'
-import Handlebars from 'handlebars'
-
-Handlebars.registerHelper('json', (context) => {
-  const jsonString = JSON.stringify(context, null, 2)
-  return new Handlebars.SafeString(jsonString)
-})
+import { compileTemplate } from '@renderer/lib/handleBars'
+import {
+  formatSelectorForPuppeteer,
+  SelectorType,
+} from '@renderer/types/selectorTypes'
 
 type ExecutorDataProps = {
   name?: string
   selector?: string
+  selectorType?: SelectorType
   text?: string
   timeout?: number
   filters?: ElementFilter[]
@@ -38,15 +38,40 @@ export const typeTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
       throw new Error(`Selector or text not found`)
     }
 
-    // Apply filters to selector if provided
-    const finalSelector =
+    // Resolve templates in selector and text
+    const resolvedSelector = compileTemplate(data.selector)(context)
+    const resolvedText = compileTemplate(data.text)(context)
+
+    // Validate: filters only work with CSS selectors
+    if (
+      data.selectorType === SelectorType.XPATH &&
+      data.filters &&
+      data.filters.length > 0
+    ) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
+      throw new Error(
+        'Advanced filters are not compatible with XPath selectors. Please use CSS selector type or remove filters.'
+      )
+    }
+
+    // Apply filters to selector if provided (only for CSS)
+    let finalSelector =
       data.filters && data.filters.length > 0
-        ? filtersToSelector(data.selector, data.filters)
-        : data.selector
+        ? filtersToSelector(resolvedSelector, data.filters)
+        : resolvedSelector
 
-    console.log('Final selector with filters:', finalSelector)
+    // Format selector for Puppeteer based on type
+    finalSelector = formatSelectorForPuppeteer(
+      finalSelector,
+      data.selectorType || SelectorType.CSS
+    )
 
-    const result = await window.api.executions.typeText(finalSelector, data.text, data.timeout)
+    console.log('Final selector:', finalSelector)
+
+    const result = await window.api.executions.typeText(finalSelector, resolvedText, data.timeout)
 
     if (!isSuccess(result)) {
       publishStatus({

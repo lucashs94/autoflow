@@ -1,5 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { FieldEditChange } from '@renderer/components/fieldEditChange'
+import { TemplateInput } from '@renderer/components/templateInput'
+import { SelectorInput, SelectorHelpIcon, SelectorTypeSelect } from '@renderer/components/selectorInput'
 import { Button } from '@renderer/components/ui/button'
 import {
   Dialog,
@@ -17,25 +19,32 @@ import {
   FormLabel,
   FormMessage,
 } from '@renderer/components/ui/form'
-import { TemplateInput } from '@renderer/components/templateInput'
 import { Slider } from '@renderer/components/ui/slider'
 import { ElementFilter } from '@renderer/features/tasks/types/filters'
-import { getAllAvailableVariables } from '@renderer/utils/getAvailableVariables'
+import { SelectorType } from '@renderer/types/selectorTypes'
 import { useWorkflow } from '@renderer/features/workflows/hooks/useWorkflows'
+import {
+  getAllAvailableVariables,
+  getAvailableVariablesWithInfo,
+} from '@renderer/utils/getAvailableVariables'
 import { useParams } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { FilterBuilder } from '../shared/FilterBuilder'
+import { FilterBuilder } from '../shared/filters/FilterBuilder'
 
 const formSchema = z.object({
   selector: z.string().min(1, { message: 'Selector is required' }),
+  selectorType: z.nativeEnum(SelectorType).default(SelectorType.CSS),
   text: z.string().min(1, { message: 'Text is required' }),
-  timeout: z.coerce.number().min(1).max(60, { message: 'Should be lower than 60' }),
+  timeout: z.coerce
+    .number()
+    .min(1)
+    .max(60, { message: 'Should be lower than 60' }),
   filters: z.array(z.any()).default([]),
 })
 
-export type FormValues = z.infer<typeof formSchema>
+export type FormValues = z.input<typeof formSchema>
 
 interface Props {
   nodeId: string
@@ -55,6 +64,7 @@ export const SettingsDialog = ({
   const [isAdvancedFiltersEnabled, setIsAdvancedFiltersEnabled] = useState(
     Boolean(defaultValues.filters?.length)
   )
+  const [isSelectorValid, setIsSelectorValid] = useState(true)
 
   const { workflowId } = useParams({ from: '/(main)/workflows/$workflowId/' })
   const { data: workflow } = useWorkflow(workflowId)
@@ -65,29 +75,57 @@ export const SettingsDialog = ({
       ? getAllAvailableVariables(nodeId, workflow.nodes, workflow.edges)
       : []
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  // Get variable info with properties
+  const variablesInfo =
+    workflow && workflow.nodes && workflow.edges
+      ? getAvailableVariablesWithInfo(nodeId, workflow.nodes, workflow.edges)
+      : undefined
+
+  const normalizedDefaultValues: FormValues = {
+    selector: defaultValues?.selector ?? '',
+    selectorType: defaultValues?.selectorType ?? SelectorType.CSS,
+    text: defaultValues?.text ?? '',
+    timeout: defaultValues?.timeout ?? 30,
+    filters: defaultValues?.filters ?? [],
+  }
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      selector: defaultValues.selector || '',
-      text: defaultValues.text || '',
-      timeout: Number(defaultValues.timeout) || 30,
-      filters: defaultValues.filters || [],
-    },
+    defaultValues: normalizedDefaultValues,
   })
 
-  const handleSubmit = (values: z.infer<typeof formSchema>) => {
+  const selectedSelectorType = form.watch('selectorType')
+
+  const handleSubmit = (values: FormValues) => {
     onSubmit(values)
     onOpenChange(false)
   }
 
   useEffect(() => {
+    if (!isAdvancedFiltersEnabled) {
+      form.setValue('filters', [])
+    }
+  }, [isAdvancedFiltersEnabled, form])
+
+  useEffect(() => {
+    // Disable filters when XPath is selected
+    if (selectedSelectorType === SelectorType.XPATH) {
+      setIsAdvancedFiltersEnabled(false)
+      form.setValue('filters', [])
+    }
+  }, [selectedSelectorType, form])
+
+  useEffect(() => {
     if (open) {
       form.reset({
         selector: defaultValues.selector || '',
+        selectorType: defaultValues.selectorType || SelectorType.CSS,
         text: defaultValues.text || '',
         timeout: defaultValues.timeout || 30,
         filters: defaultValues.filters || [],
       })
+      // Reset validation state
+      setIsSelectorValid(true)
     }
   }, [open, defaultValues, form])
 
@@ -110,21 +148,46 @@ export const SettingsDialog = ({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-8 mt-4"
+            className="space-y-6 mt-4"
           >
+            {/* Hidden field for selectorType */}
+            <FormField
+              control={form.control}
+              name="selectorType"
+              render={({ field }) => (
+                <input
+                  type="hidden"
+                  {...field}
+                />
+              )}
+            />
+
             <FormField
               control={form.control}
               name="selector"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Selector</FormLabel>
+                <FormItem className="bg-card! p-4 pb-6 rounded-lg gap-2 flex flex-col">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FormLabel>Selector</FormLabel>
+                      <SelectorHelpIcon selectorType={selectedSelectorType || SelectorType.CSS} />
+                    </div>
+                    <SelectorTypeSelect
+                      value={selectedSelectorType || SelectorType.CSS}
+                      onValueChange={(type) => form.setValue('selectorType', type)}
+                    />
+                  </div>
 
                   <FormControl>
-                    <TemplateInput
+                    <SelectorInput
                       {...field}
+                      selectorType={selectedSelectorType || SelectorType.CSS}
+                      onValidationChange={(isValid) => {
+                        setIsSelectorValid(isValid)
+                      }}
                       availableVariables={availableVariables}
-                      className=" bg-input/90!"
-                      placeholder=".class or {{ variable }}"
+                      variablesInfo={variablesInfo}
+                      className="bg-input/90!"
                     />
                   </FormControl>
 
@@ -137,14 +200,15 @@ export const SettingsDialog = ({
               control={form.control}
               name="text"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="bg-card! p-4 pb-6 rounded-lg gap-2 flex flex-col">
                   <FormLabel>Text</FormLabel>
 
                   <FormControl>
                     <TemplateInput
                       {...field}
                       availableVariables={availableVariables}
-                      className=" bg-input/90!"
+                      variablesInfo={variablesInfo}
+                      className="bg-input/90!"
                       placeholder="Type text or use {{ variable }}"
                     />
                   </FormControl>
@@ -158,7 +222,7 @@ export const SettingsDialog = ({
               control={form.control}
               name="timeout"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="bg-card! p-4 pb-6 rounded-lg gap-4 flex flex-col">
                   <div className="flex justify-between">
                     <FormLabel>Timeout (seconds):</FormLabel>
 
@@ -186,10 +250,12 @@ export const SettingsDialog = ({
               onChange={(filters) => form.setValue('filters', filters)}
               enabled={isAdvancedFiltersEnabled}
               onEnabledChange={setIsAdvancedFiltersEnabled}
+              disabled={selectedSelectorType === SelectorType.XPATH}
+              disabledReason="Advanced filters are not compatible with XPath selectors. Please use CSS selector type to enable filters."
             />
 
             <DialogFooter className="mt-4">
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={!isSelectorValid}>Save</Button>
             </DialogFooter>
           </form>
         </Form>
