@@ -55,3 +55,15 @@ export async function waitForElementService(
     return errorFromException(error, IPCErrorCode.TIMEOUT_ERROR)
   }
 }
+
+export async function getTextService(
+  selector: string,
+  timeout?: number
+): Promise<IPCResult<{ text: string }>> {
+  try {
+    const text = await instance.getText({ selector, timeout })
+    return success({ text })
+  } catch (error) {
+    return errorFromException(error, IPCErrorCode.ELEMENT_NOT_FOUND)
+  }
+}

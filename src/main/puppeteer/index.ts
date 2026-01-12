@@ -176,4 +176,47 @@ export class BrowserController {
 
     await this.page.locator(selector).click(options)
   }
+
+  async getText({
+    selector,
+    timeout,
+  }: {
+    selector: string
+    timeout?: number
+  }): Promise<string> {
+    if (this.shouldStop) {
+      throw new Error('Browser execution stopped')
+    }
+
+    if (!this.page || !this.browser || !this.abortController) {
+      throw new Error('No active page to get text from')
+    }
+
+    try {
+      const options: any = { signal: this.abortController.signal }
+      if (timeout) {
+        options.timeout = timeout * 1000
+      }
+
+      // Wait for element to be visible
+      await this.page.locator(selector).wait(options)
+
+      // Get text content using $eval
+      const text = await this.page.$eval(selector, (el) => el.textContent || '')
+
+      if (!text) {
+        throw new Error(`Element "${selector}" has no text content`)
+      }
+
+      return text.trim()
+    } catch (error: any) {
+      throw new Error(
+        `Failed to get text from element "${selector}": ${error.message}`
+      )
+    }
+  }
+
+  isReady(): boolean {
+    return !!(this.browser && this.page && !this.shouldStop)
+  }
 }
