@@ -1,6 +1,7 @@
 import { NodeType } from '@renderer/types/nodes'
 import { NodeExecutor } from '../types/types'
 import { clickElementExecutor } from '../ui/components/clickElement/executor'
+import { getTextExecutor } from '../ui/components/getText/executor'
 import { httpRequestExecutor } from '../ui/components/httpRequest/executor'
 import { loopNodeExecutor } from '../ui/components/loop/executor'
 import { navigationExecutor } from '../ui/components/navigation/executor'
@@ -33,4 +34,5 @@ export function registerAllExecutors() {
   registerExecutor(NodeType.SET_VARIABLES, setVariableNodeExecutor)
   registerExecutor(NodeType.CLICK_ELEMENT, clickElementExecutor)
   registerExecutor(NodeType.LOOP, loopNodeExecutor)
+  registerExecutor(NodeType.GET_TEXT, getTextExecutor)
 }

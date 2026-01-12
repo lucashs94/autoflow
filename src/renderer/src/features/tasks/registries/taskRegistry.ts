@@ -1,5 +1,6 @@
 import { NodeType } from '@renderer/types/nodes'
 import { clickElementTask } from '../ui/components/clickElement'
+import { getTextTask } from '../ui/components/getText'
 import { httpRequestTask } from '../ui/components/httpRequest'
 import { loopTask } from '../ui/components/loop'
 import { navigationTask } from '../ui/components/navigation'
@@ -17,4 +18,5 @@ export const TaskRegistry = {
   [NodeType.WAIT_TIME]: waitTimeTask,
   [NodeType.SET_VARIABLES]: setVariableTask,
   [NodeType.LOOP]: loopTask,
+  [NodeType.GET_TEXT]: getTextTask,
 }

@@ -17,6 +17,7 @@ export const nodeComponents = {
   [NodeType.WAIT_TIME]: TaskRegistry.WAIT_TIME.node,
   [NodeType.SET_VARIABLES]: TaskRegistry.SET_VARIABLES.node,
   [NodeType.LOOP]: TaskRegistry.LOOP.node,
+  [NodeType.GET_TEXT]: TaskRegistry.GET_TEXT.node,
 } as const satisfies nodeComponentsTypes
 
 export type RegisteredNodeTypes = keyof typeof nodeComponents
