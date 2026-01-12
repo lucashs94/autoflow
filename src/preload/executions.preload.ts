@@ -9,6 +9,8 @@ export const executions = {
     ipcRenderer.invoke('execution:clickElement', selector, timeout),
   waitForElement: (selector: string, shouldBe: 'visible' | 'hidden', timeout?: number) =>
     ipcRenderer.invoke('execution:waitForElement', selector, shouldBe, timeout),
+  getText: (selector: string, timeout?: number) =>
+    ipcRenderer.invoke('execution:getText', selector, timeout),
   abort: () =>
     ipcRenderer.invoke('execution:abort'),
 }

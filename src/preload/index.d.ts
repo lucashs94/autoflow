@@ -32,6 +32,7 @@ declare global {
           shouldBe: 'visible' | 'hidden',
           timeout?: number
         ) => Promise<IPCResult<void>>
+        getText: (selector: string, timeout?: number) => Promise<IPCResult<{ text: string }>>
         abort: () => Promise<void>
       }
       history: {
