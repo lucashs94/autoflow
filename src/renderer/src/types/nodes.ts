@@ -8,6 +8,7 @@ export const NodeType = {
   CLICK_ELEMENT: 'CLICK_ELEMENT',
   SET_VARIABLES: 'SET_VARIABLES',
   LOOP: 'LOOP',
+  GET_TEXT: 'GET_TEXT',
 } as const
 
 export type NodeType = (typeof NodeType)[keyof typeof NodeType]
