@@ -5,6 +5,7 @@ import { useReactFlow } from '@xyflow/react'
 import {
   BracesIcon,
   ChromiumIcon,
+  FileTextIcon,
   GlobeIcon,
   HourglassIcon,
   MousePointerIcon,
@@ -72,6 +73,12 @@ const interactionsNodes: NodeTypeOption[] = [
     label: 'Click Element',
     description: 'Click on an element',
     icon: MousePointerIcon,
+  },
+  {
+    type: NodeType.GET_TEXT,
+    label: 'Get Text',
+    description: 'Get text content of an element',
+    icon: FileTextIcon,
   },
 ]
 
