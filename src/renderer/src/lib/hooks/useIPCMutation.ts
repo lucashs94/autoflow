@@ -78,7 +78,7 @@ export function useIPCMutation<TData, TVariables>({
   const queryClient = useQueryClient()
 
   // Generate a stable toast ID from mutation key
-  const toastId = mutationKey.join('-')
+  const toastId = mutationKey[0]
 
   return useMutation({
     mutationKey,
@@ -117,7 +117,7 @@ export function useIPCMutation<TData, TVariables>({
       // Show success toast if message is provided
       if (successMessage) {
         toast.success(successMessage, {
-          id: toastId,
+          id: 'create-workflow',
         })
       }
 

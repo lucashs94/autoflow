@@ -1,8 +1,8 @@
+import { useIPCMutation } from '@renderer/lib/hooks/useIPCMutation'
+import { useIPCQuery } from '@renderer/lib/hooks/useIPCQuery'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { Edge, Node } from '@xyflow/react'
 import { toast } from 'sonner'
-import { useIPCQuery } from '@renderer/lib/hooks/useIPCQuery'
-import { useIPCMutation } from '@renderer/lib/hooks/useIPCMutation'
 import { executeWorkflow } from '../functions/executeWorkflow'
 
 /**
@@ -32,7 +32,7 @@ export const useWorkflow = (workflowId: string) => {
  */
 export const useCreateWorkflow = () => {
   return useIPCMutation({
-    mutationKey: ['createWorkflow'],
+    mutationKey: ['create-workflow'],
     mutationFn: (name: string) => window.api.workflows.create(name),
     successMessage: 'Workflow created successfully!',
     errorMessage: 'Failed to create workflow!',
