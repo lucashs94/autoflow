@@ -57,9 +57,10 @@ export function validateTemplate(
       }
 
       // Verificar se a propriedade existe (se temos info sobre a variável)
+      // Skip validation if properties array is empty (e.g., SET_VARIABLES allows arbitrary properties)
       if (variablesInfo && propertyPath) {
         const varInfo = variablesInfo.get(varName)
-        if (varInfo && varInfo.properties) {
+        if (varInfo && varInfo.properties && varInfo.properties.length > 0) {
           const firstProperty = propertyPath.split('.')[0].trim()
           if (!varInfo.properties.includes(firstProperty)) {
             return { isValid: false, error: `Property "${firstProperty}" does not exist in "${varName}". Use autocomplete to see available properties.` }

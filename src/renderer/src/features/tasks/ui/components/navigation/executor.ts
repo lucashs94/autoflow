@@ -1,5 +1,6 @@
 import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
+import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
 import { isSuccess } from '@shared/@types/ipc-response'
 import { compileTemplate } from '@renderer/lib/handleBars'
 
@@ -12,6 +13,7 @@ export const navigationExecutor: NodeExecutor<ExecutorDataProps> = async ({
   context,
   data,
   nodeId,
+  outgoingEdges,
 }) => {
   publishStatus({
     nodeId,
@@ -47,8 +49,11 @@ export const navigationExecutor: NodeExecutor<ExecutorDataProps> = async ({
     })
 
     return {
-      ...context,
-      [data.name!]: 'true',
+      context: {
+        ...context,
+        [data.name!]: 'true',
+      },
+      nextNodeId: findNextNode(outgoingEdges),
     }
   } catch (error) {
     publishStatus({

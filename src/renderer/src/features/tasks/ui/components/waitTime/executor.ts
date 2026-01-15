@@ -1,5 +1,6 @@
 import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
+import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
 import { compileTemplate } from '@renderer/lib/handleBars'
 
 type ExecutorDataProps = {
@@ -12,6 +13,7 @@ export const waitTimeNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
   data,
   nodeId,
   signal,
+  outgoingEdges,
 }) => {
   publishStatus({
     nodeId,
@@ -60,8 +62,10 @@ export const waitTimeNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
     })
 
     return {
-      ...context,
-      // [data.name]: '',
+      context: {
+        ...context,
+      },
+      nextNodeId: findNextNode(outgoingEdges),
     }
   } catch (error) {
     publishStatus({

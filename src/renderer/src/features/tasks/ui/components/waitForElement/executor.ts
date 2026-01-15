@@ -2,6 +2,7 @@ import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChann
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
 import { ElementFilter } from '@renderer/features/tasks/types/filters'
 import { filtersToSelector } from '@renderer/features/tasks/utils/filterToSelector'
+import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
 import { isSuccess } from '@shared/@types/ipc-response'
 import { compileTemplate } from '@renderer/lib/handleBars'
 import {
@@ -20,7 +21,7 @@ type ExecutorDataProps = {
 
 export const waitForElementNodeExecutor: NodeExecutor<
   ExecutorDataProps
-> = async ({ context, data, nodeId }) => {
+> = async ({ context, data, nodeId, outgoingEdges }) => {
   publishStatus({
     nodeId,
     status: 'loading',
@@ -88,8 +89,11 @@ export const waitForElementNodeExecutor: NodeExecutor<
     })
 
     return {
-      ...context,
-      [data.name!]: true,
+      context: {
+        ...context,
+        [data.name!]: true,
+      },
+      nextNodeId: findNextNode(outgoingEdges),
     }
   } catch (error) {
     publishStatus({

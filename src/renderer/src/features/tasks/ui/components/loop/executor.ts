@@ -1,6 +1,7 @@
 import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { getExecutor } from '@renderer/features/tasks/registries/executorRegistry'
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
+import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
 import { topologicalSort } from '@renderer/features/workflows/utils/topologicalSort'
 import { compileTemplate } from '@renderer/lib/handleBars'
 import { NodeType } from '@renderer/types/nodes'
@@ -19,6 +20,7 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
   workflowId,
   signal,
   executionId,
+  outgoingEdges,
 }) => {
   const start = performance.now()
 
@@ -84,6 +86,10 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
       throw new Error(`loop must have a connected final node`)
     }
 
+    // Track results from each iteration for context preservation
+    const iterationResults: unknown[] = []
+    let currentIndex = 0
+
     // Executar a sequencia de nodes passando o item como contexto
     for (const item of vars) {
       // Check if workflow was cancelled before processing this iteration
@@ -105,6 +111,8 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
         ...context,
         [data.name!]: {
           item,
+          index: currentIndex,
+          total: vars.length,
         },
       }
 
@@ -131,15 +139,24 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
         const executor = getExecutor(node.type as NodeType)
         const nodeStartTime = Date.now()
 
+        // Get outgoing edges for this internal node
+        const nodeOutgoingEdges = workflow.edges.filter(
+          (e) => e.source === node.id
+        )
+
         try {
-          internalContext = await executor({
+          const result = await executor({
             data: node.data as Record<string, unknown>,
             context: internalContext,
             nodeId: node.id,
             workflowId,
             signal,
             executionId,
+            outgoingEdges: nodeOutgoingEdges,
           })
+
+          // Extract context from result
+          internalContext = result.context
 
           // Log successful node execution inside loop
           if (executionId) {
@@ -178,11 +195,18 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
         }
       }
 
+      // Store the iteration result (the loop variable data)
+      const loopVarData = internalContext[data.name!]
+      iterationResults.push(loopVarData)
+
+      // Merge internal context back, preserving all data from internal nodes
       const { [data.name!]: _, ...rest } = internalContext
       context = {
         ...context,
         ...rest,
       }
+
+      currentIndex++
     }
 
     console.log('after', JSON.stringify(context, null, 2))
@@ -195,8 +219,15 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
     })
 
     return {
-      ...context,
-      [data.name!]: '',
+      context: {
+        ...context,
+        [data.name!]: {
+          completed: true,
+          iterations: vars.length,
+          results: iterationResults,
+        },
+      },
+      nextNodeId: findNextNode(outgoingEdges, 'done'),
     }
   } catch (error) {
     publishStatus({

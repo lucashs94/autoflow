@@ -1,5 +1,6 @@
 import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
+import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
 import { compileTemplate } from '@renderer/lib/handleBars'
 import { verifyMinimunNodeExecutionTime } from '@renderer/utils/minNodeExecutionTime'
 
@@ -12,6 +13,7 @@ export const setVariableNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
   context,
   data,
   nodeId,
+  outgoingEdges,
 }) => {
   const start = performance.now()
 
@@ -42,8 +44,11 @@ export const setVariableNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
     })
 
     return {
-      ...context,
-      [data.name!]: parsedVariables,
+      context: {
+        ...context,
+        [data.name!]: parsedVariables,
+      },
+      nextNodeId: findNextNode(outgoingEdges),
     }
   } catch (error) {
     publishStatus({
