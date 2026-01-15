@@ -1,10 +1,11 @@
 import Handlebars from 'handlebars'
 
 /**
- * Helper 'json' - Converte valores para formato JSON adequado
- * - Strings: retorna sem aspas adicionais (as aspas do template JSON são usadas)
- * - Números/Booleans: retorna como string simples
+ * Helper 'json' - Converte valores para formato JSON válido
+ * - Strings: retorna COM aspas e caracteres escapados
+ * - Números/Booleans: retorna como está
  * - Objetos/Arrays: faz JSON.stringify completo
+ * - Null/Undefined: retorna "null"
  */
 Handlebars.registerHelper('json', (context) => {
   // Null ou undefined
@@ -12,17 +13,10 @@ Handlebars.registerHelper('json', (context) => {
     return new Handlebars.SafeString('null')
   }
 
-  // String: retornar direto SEM aspas adicionais
-  // (as aspas do template JSON original serão usadas)
+  // String: retornar COM aspas para ser JSON válido
   if (typeof context === 'string') {
-    // Escapar caracteres especiais JSON
-    const escaped = context
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\t/g, '\\t')
-    return new Handlebars.SafeString(escaped)
+    // JSON.stringify já escapa caracteres especiais e adiciona aspas
+    return new Handlebars.SafeString(JSON.stringify(context))
   }
 
   // Número ou Boolean: retornar direto
@@ -32,7 +26,7 @@ Handlebars.registerHelper('json', (context) => {
 
   // Objeto ou Array: fazer stringify completo
   try {
-    const jsonString = JSON.stringify(context, null, 2)
+    const jsonString = JSON.stringify(context)
     return new Handlebars.SafeString(jsonString)
   } catch (error) {
     console.error('[handleBars] Error stringifying context:', error)
