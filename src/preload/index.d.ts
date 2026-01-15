@@ -18,12 +18,14 @@ declare global {
           nodes: FlowNode[],
           edges: edgesServiceType[]
         ) => Promise<IPCResult<void>>
+        updateHeadless: (workflowId: string, headless: boolean) => Promise<IPCResult<void>>
       }
       nodes: {
         getOne: (nodeId: string) => Promise<IPCResult<NodeType>>
         updateNodeName: (nodeId: string, name: string) => Promise<IPCResult<void>>
       }
       executions: {
+        startBrowser: (headless: boolean) => Promise<IPCResult<void>>
         navigateUrl: (url: string) => Promise<IPCResult<void>>
         typeText: (selector: string, text: string, timeout?: number) => Promise<IPCResult<void>>
         clickElement: (selector: string, timeout?: number) => Promise<IPCResult<void>>
@@ -33,6 +35,8 @@ declare global {
           timeout?: number
         ) => Promise<IPCResult<void>>
         getText: (selector: string, timeout?: number) => Promise<IPCResult<{ text: string }>>
+        elementExists: (selector: string, timeout?: number) => Promise<IPCResult<{ exists: boolean }>>
+        dragAndDrop: (sourceSelector: string, targetSelector: string, timeout?: number) => Promise<IPCResult<void>>
         abort: () => Promise<void>
       }
       history: {

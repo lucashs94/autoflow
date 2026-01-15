@@ -8,9 +8,26 @@ import {
 
 const instance = BrowserController.getInstance()
 
+export async function startBrowserService(
+  headless: boolean = false
+): Promise<IPCResult<void>> {
+  try {
+    // Only start if not already running
+    if (!instance.isBrowserRunning()) {
+      await instance.start(headless)
+    }
+    return success(undefined)
+  } catch (error) {
+    return errorFromException(error, IPCErrorCode.NAVIGATION_ERROR)
+  }
+}
+
 export async function navigateUrlService(url: string): Promise<IPCResult<void>> {
   try {
-    await instance.start()
+    // Start browser if not already running (with default headless=false as fallback)
+    if (!instance.isBrowserRunning()) {
+      await instance.start(false)
+    }
     await instance.goToUrl(url)
     return success(undefined)
   } catch (error) {
@@ -63,6 +80,31 @@ export async function getTextService(
   try {
     const text = await instance.getText({ selector, timeout })
     return success({ text })
+  } catch (error) {
+    return errorFromException(error, IPCErrorCode.ELEMENT_NOT_FOUND)
+  }
+}
+
+export async function elementExistsService(
+  selector: string,
+  timeout?: number
+): Promise<IPCResult<{ exists: boolean }>> {
+  try {
+    const exists = await instance.elementExists({ selector, timeout })
+    return success({ exists })
+  } catch (error) {
+    return errorFromException(error, IPCErrorCode.ELEMENT_NOT_FOUND)
+  }
+}
+
+export async function dragAndDropService(
+  sourceSelector: string,
+  targetSelector: string,
+  timeout?: number
+): Promise<IPCResult<void>> {
+  try {
+    await instance.dragAndDrop({ sourceSelector, targetSelector, timeout })
+    return success(undefined)
   } catch (error) {
     return errorFromException(error, IPCErrorCode.ELEMENT_NOT_FOUND)
   }

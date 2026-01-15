@@ -1,6 +1,8 @@
 import { ipcRenderer } from 'electron'
 
 export const executions = {
+  startBrowser: (headless: boolean) =>
+    ipcRenderer.invoke('execution:startBrowser', headless),
   navigateUrl: (url: string) =>
     ipcRenderer.invoke('execution:navigateUrl', url),
   typeText: (selector: string, text: string, timeout?: number) =>
@@ -11,6 +13,10 @@ export const executions = {
     ipcRenderer.invoke('execution:waitForElement', selector, shouldBe, timeout),
   getText: (selector: string, timeout?: number) =>
     ipcRenderer.invoke('execution:getText', selector, timeout),
+  elementExists: (selector: string, timeout?: number) =>
+    ipcRenderer.invoke('execution:elementExists', selector, timeout),
+  dragAndDrop: (sourceSelector: string, targetSelector: string, timeout?: number) =>
+    ipcRenderer.invoke('execution:dragAndDrop', sourceSelector, targetSelector, timeout),
   abort: () =>
     ipcRenderer.invoke('execution:abort'),
 }

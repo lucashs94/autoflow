@@ -5,8 +5,15 @@ import {
   typeTextService,
   waitForElementService,
   getTextService,
+  elementExistsService,
+  dragAndDropService,
+  startBrowserService,
 } from '../services/executions.service'
 import { BrowserController } from '../puppeteer'
+
+ipcMain.handle('execution:startBrowser', async (_, headless: boolean) =>
+  startBrowserService(headless)
+)
 
 ipcMain.handle('execution:navigateUrl', async (_, url: string) =>
   navigateUrlService(url)
@@ -32,6 +39,17 @@ ipcMain.handle(
 ipcMain.handle(
   'execution:getText',
   async (_, selector: string, timeout?: number) => await getTextService(selector, timeout)
+)
+
+ipcMain.handle(
+  'execution:elementExists',
+  async (_, selector: string, timeout?: number) => await elementExistsService(selector, timeout)
+)
+
+ipcMain.handle(
+  'execution:dragAndDrop',
+  async (_, sourceSelector: string, targetSelector: string, timeout?: number) =>
+    await dragAndDropService(sourceSelector, targetSelector, timeout)
 )
 
 // Abort current browser operations (not close browser, just cancel in-flight operations)
