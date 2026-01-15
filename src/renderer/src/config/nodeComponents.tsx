@@ -18,6 +18,8 @@ export const nodeComponents = {
   [NodeType.SET_VARIABLES]: TaskRegistry.SET_VARIABLES.node,
   [NodeType.LOOP]: TaskRegistry.LOOP.node,
   [NodeType.GET_TEXT]: TaskRegistry.GET_TEXT.node,
+  [NodeType.ELEMENT_EXISTS]: TaskRegistry.ELEMENT_EXISTS.node,
+  [NodeType.DRAG_AND_DROP]: TaskRegistry.DRAG_AND_DROP.node,
 } as const satisfies nodeComponentsTypes
 
 export type RegisteredNodeTypes = keyof typeof nodeComponents

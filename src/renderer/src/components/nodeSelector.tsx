@@ -7,9 +7,11 @@ import {
   ChromiumIcon,
   FileTextIcon,
   GlobeIcon,
+  GripIcon,
   HourglassIcon,
   MousePointerIcon,
   RepeatIcon,
+  SearchCheckIcon,
   TimerResetIcon,
   TypeIcon,
 } from 'lucide-react'
@@ -80,6 +82,12 @@ const interactionsNodes: NodeTypeOption[] = [
     description: 'Get text content of an element',
     icon: FileTextIcon,
   },
+  {
+    type: NodeType.DRAG_AND_DROP,
+    label: 'Drag and Drop',
+    description: 'Drag element from source to target',
+    icon: GripIcon,
+  },
 ]
 
 const contextNodes: NodeTypeOption[] = [
@@ -97,6 +105,12 @@ const logicNodes: NodeTypeOption[] = [
     label: 'Loop',
     description: 'Repeat a set of actions',
     icon: RepeatIcon,
+  },
+  {
+    type: NodeType.ELEMENT_EXISTS,
+    label: 'Element Exists',
+    description: 'Check if element exists and branch flow',
+    icon: SearchCheckIcon,
   },
 ]
 

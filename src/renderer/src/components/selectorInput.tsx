@@ -95,7 +95,7 @@ export function SelectorTypeSelect({
       value={value}
       onValueChange={(value) => onValueChange(value as SelectorType)}
     >
-      <SelectTrigger className="h-8 w-[100px] text-xs">
+      <SelectTrigger className="h-8! w-[100px] text-xs">
         <SelectValue />
       </SelectTrigger>
 
