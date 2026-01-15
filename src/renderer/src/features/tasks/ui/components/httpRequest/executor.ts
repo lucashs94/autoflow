@@ -1,6 +1,7 @@
 import ky, { Options as KyOptions } from 'ky'
 import { publishStatus } from '../../../channels/nodeStatusChannel'
 import { NodeExecutor } from '../../../types/types'
+import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
 import { compileTemplate } from '@renderer/lib/handleBars'
 
 type ExecutorDataProps = {
@@ -15,6 +16,7 @@ export const httpRequestExecutor: NodeExecutor<ExecutorDataProps> = async ({
   data,
   nodeId,
   signal,
+  outgoingEdges,
 }) => {
   publishStatus({
     nodeId,
@@ -33,64 +35,63 @@ export const httpRequestExecutor: NodeExecutor<ExecutorDataProps> = async ({
   })
 
   try {
-    const result = (async () => {
-      if (!data.endpoint || !data.name || !data.method) {
-        publishStatus({
-          nodeId,
-          status: 'error',
-        })
+    if (!data.endpoint || !data.name || !data.method) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
 
-        throw new Error(`HTTP Request node: No all infos configured`)
-      }
+      throw new Error(`HTTP Request node: No all infos configured`)
+    }
 
-      const method = data.method
+    const method = data.method
 
-      // Resolve templates in endpoint and body
-      const resolvedEndpoint = compileTemplate(data.endpoint)(context)
+    // Resolve templates in endpoint and body
+    const resolvedEndpoint = compileTemplate(data.endpoint)(context)
 
-      const options: KyOptions = {
-        method,
-        signal, // Pass abort signal to ky
-      }
+    const options: KyOptions = {
+      method,
+      signal, // Pass abort signal to ky
+    }
 
-      if (['POST', 'PUT', 'PATCH'].includes(method)) {
-        if (data.body) {
-          const resolvedBody = compileTemplate(data.body)(context)
-          JSON.parse(resolvedBody)
+    if (['POST', 'PUT', 'PATCH'].includes(method)) {
+      if (data.body) {
+        const resolvedBody = compileTemplate(data.body)(context)
+        JSON.parse(resolvedBody)
 
-          options.body = resolvedBody
-          options.headers = {
-            'Content-Type': 'application/json',
-          }
+        options.body = resolvedBody
+        options.headers = {
+          'Content-Type': 'application/json',
         }
       }
+    }
 
-      const response = await ky(resolvedEndpoint, options)
-      const contentType = response.headers.get('content-type')
-      const responseData = contentType?.includes('application/json')
-        ? await response.json()
-        : await response.text()
+    const response = await ky(resolvedEndpoint, options)
+    const contentType = response.headers.get('content-type')
+    const responseData = contentType?.includes('application/json')
+      ? await response.json()
+      : await response.text()
 
-      const responsePayload = {
-        httpResponse: {
-          status: response.status,
-          statusText: response.statusText,
-          data: responseData,
-        },
-      }
-
-      return {
-        ...context,
-        [data.name]: responsePayload,
-      }
-    })()
+    const responsePayload = {
+      httpResponse: {
+        status: response.status,
+        statusText: response.statusText,
+        data: responseData,
+      },
+    }
 
     publishStatus({
       nodeId,
       status: 'success',
     })
 
-    return result
+    return {
+      context: {
+        ...context,
+        [data.name]: responsePayload,
+      },
+      nextNodeId: findNextNode(outgoingEdges),
+    }
   } catch (error) {
     console.log(error)
 

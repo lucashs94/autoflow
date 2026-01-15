@@ -5,7 +5,8 @@ import {
 } from '@renderer/features/tasks/registries/executorRegistry'
 import { NodeType } from '@renderer/types/nodes'
 import { isSuccess } from '@shared/@types/ipc-response'
-import { topologicalSort } from '../utils/topologicalSort'
+
+const MAX_NODE_EXECUTIONS = 1000
 
 export async function executeWorkflow(
   workflowId: string,
@@ -19,6 +20,18 @@ export async function executeWorkflow(
 
   const workflow = result.data
 
+  // Start browser with workflow's headless setting
+  // headless: true means browser runs in background (no window)
+  // headless: false means browser window is visible (visual mode)
+  const startBrowserResult = await window.api.executions.startBrowser(
+    workflow.headless
+  )
+  if (!isSuccess(startBrowserResult)) {
+    throw new Error(
+      `Failed to start browser: ${startBrowserResult.error.message}`
+    )
+  }
+
   // Create execution history record
   const executionId = crypto.randomUUID()
   const executionStartTime = Date.now()
@@ -31,46 +44,41 @@ export async function executeWorkflow(
     status: 'running',
   })
 
+  // Find initial node
   const initialNode = workflow.nodes.find((n) => n.type === NodeType.INITIAL)
   if (!initialNode) {
     throw new Error(`Workflow must have an initial node!`)
   }
 
-  ;(async () => {
-    workflow.nodes.forEach((node) => {
-      publishStatus({
-        nodeId: node.id,
-        status: 'initial',
-      })
+  // Reset all nodes to initial status
+  workflow.nodes.forEach((node) => {
+    publishStatus({
+      nodeId: node.id,
+      status: 'initial',
     })
-
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-  })()
+  })
 
   registerAllExecutors()
 
-  // TODO: Add Types
+  // Find first node after INITIAL
+  const firstEdge = workflow.edges.find((e) => e.source === initialNode.id)
+  let currentNodeId: string | null = firstEdge?.target ?? null
 
-  // Define topological order
-  const sorted = topologicalSort(workflow.nodes, workflow.edges, initialNode)
+  // Initialize context
+  let context: Record<string, unknown> = {}
 
-  console.log(sorted)
-
-  // Initialize the Context
-  let context = {}
-
-  // IPC start flow
+  // Track executions per node (protection against infinite loops)
+  const executionCount = new Map<string, number>()
 
   let executionFinished = false
 
   try {
-    // Loop on each node and run the executor
-    for (const node of sorted) {
+    // Runtime execution loop - follows edges dynamically
+    while (currentNodeId) {
       // Check if workflow was cancelled
       if (signal?.aborted) {
-        console.log('Workflow cancelled - resetting remaining nodes')
+        console.log('Workflow cancelled')
 
-        // Finish execution as cancelled
         await window.api.history.finishExecution({
           id: executionId,
           finished_at: Date.now(),
@@ -87,20 +95,47 @@ export async function executeWorkflow(
         }
       }
 
-      if (node.type === NodeType.INITIAL) continue
+      // Find current node
+      const node = workflow.nodes.find((n) => n.id === currentNodeId)
+      if (!node) {
+        console.warn(`Node ${currentNodeId} not found, stopping execution`)
+        break
+      }
 
+      // Protection against infinite loops
+      const count = (executionCount.get(currentNodeId) ?? 0) + 1
+      executionCount.set(currentNodeId, count)
+
+      if (count > MAX_NODE_EXECUTIONS) {
+        throw new Error(
+          `Max executions (${MAX_NODE_EXECUTIONS}) exceeded for node "${(node.data as any).name || node.id}"`
+        )
+      }
+
+      // Get outgoing edges from current node
+      const outgoingEdges = workflow.edges.filter(
+        (e) => e.source === currentNodeId
+      )
+
+      // Execute the node
       const executor = getExecutor(node.type as NodeType)
       const nodeStartTime = Date.now()
 
       try {
-        context = await executor({
+        // All executors receive the same parameters and return the same structure
+        const executorResult = await executor({
           data: node.data as Record<string, unknown>,
           context,
           nodeId: node.id,
           workflowId,
           signal,
           executionId,
+          outgoingEdges,
         })
+
+        // Update context and get next node from executor result
+        context = executorResult.context
+        currentNodeId = executorResult.nextNodeId
 
         // Log successful node execution
         await window.api.history.logNodeExecution({
@@ -133,22 +168,8 @@ export async function executeWorkflow(
 
         // Check if it was cancelled during execution
         if (signal?.aborted) {
-          console.log(
-            'Workflow cancelled during node execution - resetting remaining nodes'
-          )
+          console.log('Workflow cancelled during node execution')
 
-          // Reset all remaining nodes
-          const currentIndex = sorted.indexOf(node)
-          sorted.slice(currentIndex + 1).forEach((remainingNode) => {
-            if (remainingNode.type !== NodeType.INITIAL) {
-              publishStatus({
-                nodeId: remainingNode.id,
-                status: 'initial',
-              })
-            }
-          })
-
-          // Finish execution as cancelled
           await window.api.history.finishExecution({
             id: executionId,
             finished_at: Date.now(),
@@ -177,28 +198,13 @@ export async function executeWorkflow(
 
         executionFinished = true
 
-        // Re-throw other errors
         throw error
       }
 
-      // Check again after executor completes in case it was cancelled during execution
+      // Check again after executor completes
       if (signal?.aborted) {
-        console.log(
-          'Workflow cancelled after node execution - resetting remaining nodes'
-        )
+        console.log('Workflow cancelled after node execution')
 
-        // Reset all remaining nodes
-        const currentIndex = sorted.indexOf(node)
-        sorted.slice(currentIndex + 1).forEach((remainingNode) => {
-          if (remainingNode.type !== NodeType.INITIAL) {
-            publishStatus({
-              nodeId: remainingNode.id,
-              status: 'initial',
-            })
-          }
-        })
-
-        // Finish execution as cancelled
         await window.api.history.finishExecution({
           id: executionId,
           finished_at: Date.now(),

@@ -2,6 +2,7 @@ import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChann
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
 import { ElementFilter } from '@renderer/features/tasks/types/filters'
 import { filtersToSelector } from '@renderer/features/tasks/utils/filterToSelector'
+import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
 import { isSuccess } from '@shared/@types/ipc-response'
 import { compileTemplate } from '@renderer/lib/handleBars'
 import {
@@ -21,6 +22,7 @@ export const getTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
   context,
   data,
   nodeId,
+  outgoingEdges,
 }) => {
   publishStatus({
     nodeId,
@@ -85,10 +87,13 @@ export const getTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
     })
 
     return {
-      ...context,
-      [data.name!]: {
-        text: result.data.text,
+      context: {
+        ...context,
+        [data.name!]: {
+          text: result.data.text,
+        },
       },
+      nextNodeId: findNextNode(outgoingEdges),
     }
   } catch (error) {
     publishStatus({
