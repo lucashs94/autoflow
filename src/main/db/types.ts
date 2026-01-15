@@ -1,6 +1,7 @@
 export type WorkflowType = {
   id: string
   name: string
+  headless: number // 1 = headless (default), 0 = visual mode
   createdAt: number
   updatedAt: number
 }

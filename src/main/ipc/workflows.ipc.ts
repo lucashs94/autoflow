@@ -6,6 +6,7 @@ import {
   deleteWorkflowService,
   getWorkflowService,
   getWorkflowsService,
+  updateWorkflowHeadlessService,
   updateWorkflowNameService,
   updateWorkflowService,
 } from '../services/workflows.service'
@@ -29,4 +30,9 @@ ipcMain.handle(
   'workflows:update',
   async (_, workflowId: string, nodes: FlowNode[], edges: edgesServiceType[]) =>
     updateWorkflowService(workflowId, nodes, edges)
+)
+ipcMain.handle(
+  'workflows:updateHeadless',
+  async (_, workflowId: string, headless: boolean) =>
+    updateWorkflowHeadlessService(workflowId, headless)
 )

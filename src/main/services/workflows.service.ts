@@ -7,6 +7,7 @@ import {
   getWorkflow,
   getWorkflows,
   updateWorkflow,
+  updateWorkflowHeadless,
   updateWorkflowName,
 } from '../db/workflows'
 import {
@@ -55,7 +56,13 @@ export function getWorkflowService(
       targetHandle: edge.toInput || undefined,
     }))
 
-    return success({ id: workflow.id, name: workflow.name, nodes: parsedNodes, edges: parsedEdges })
+    return success({
+      id: workflow.id,
+      name: workflow.name,
+      headless: workflow.headless === 1,
+      nodes: parsedNodes,
+      edges: parsedEdges,
+    })
   } catch (err) {
     return errorFromException(err, IPCErrorCode.DATABASE_ERROR)
   }
@@ -101,6 +108,18 @@ export function updateWorkflowNameService(
 export function deleteWorkflowService(workflowId: string): IPCResult<void> {
   try {
     deleteWorkflow(workflowId)
+    return success(undefined)
+  } catch (err) {
+    return errorFromException(err, IPCErrorCode.DATABASE_ERROR)
+  }
+}
+
+export function updateWorkflowHeadlessService(
+  workflowId: string,
+  headless: boolean
+): IPCResult<void> {
+  try {
+    updateWorkflowHeadless(workflowId, headless)
     return success(undefined)
   } catch (err) {
     return errorFromException(err, IPCErrorCode.DATABASE_ERROR)

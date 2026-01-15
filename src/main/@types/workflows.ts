@@ -11,6 +11,7 @@ import type { Node, Edge } from '@xyflow/react'
 export type WorkflowServiceReturnType = {
   id: string
   name: string
+  headless: boolean
   nodes: Node[]
   edges: Edge[]
 }

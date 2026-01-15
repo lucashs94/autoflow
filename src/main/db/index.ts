@@ -23,6 +23,7 @@ db.exec(
     CREATE TABLE IF NOT EXISTS workflows (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
+      headless INTEGER NOT NULL DEFAULT 1,
       createdAt INTEGER NOT NULL,
       updatedAt INTEGER NOT NULL
     );
@@ -80,5 +81,19 @@ db.exec(
     CREATE INDEX IF NOT EXISTS idx_node_execution ON node_execution_log(execution_id, started_at);
   `
 )
+
+// Migration: Add headless column to workflows table if it doesn't exist
+try {
+  const tableInfo = db.prepare('PRAGMA table_info(workflows)').all() as Array<{ name: string }>
+  const hasHeadless = tableInfo.some((col) => col.name === 'headless')
+
+  if (!hasHeadless) {
+    console.log('🔄 Running migration: Adding headless column to workflows...')
+    db.exec('ALTER TABLE workflows ADD COLUMN headless INTEGER NOT NULL DEFAULT 1')
+    console.log('✔ Migration completed.')
+  }
+} catch (err) {
+  console.error('Migration error:', err)
+}
 
 console.log('✔ Banco inicializado.')

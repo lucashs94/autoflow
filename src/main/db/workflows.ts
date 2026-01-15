@@ -118,6 +118,15 @@ export function updateWorkflowName(workflowId: string, name: string) {
   )
 }
 
+export function updateWorkflowHeadless(workflowId: string, headless: boolean) {
+  const now = Date.now()
+  db.prepare('UPDATE workflows SET headless = ?, updatedAt = ? WHERE id = ?').run(
+    headless ? 1 : 0,
+    now,
+    workflowId
+  )
+}
+
 export function deleteWorkflow(workflowId: string) {
   db.transaction(() => {
     // delete old nodes, edges and workflow
