@@ -1,5 +1,7 @@
 import { NodeType } from '@renderer/types/nodes'
 import { clickElementTask } from '../ui/components/clickElement'
+import { dragAndDropTask } from '../ui/components/dragAndDrop'
+import { elementExistsTask } from '../ui/components/elementExists'
 import { getTextTask } from '../ui/components/getText'
 import { httpRequestTask } from '../ui/components/httpRequest'
 import { loopTask } from '../ui/components/loop'
@@ -19,4 +21,6 @@ export const TaskRegistry = {
   [NodeType.SET_VARIABLES]: setVariableTask,
   [NodeType.LOOP]: loopTask,
   [NodeType.GET_TEXT]: getTextTask,
+  [NodeType.ELEMENT_EXISTS]: elementExistsTask,
+  [NodeType.DRAG_AND_DROP]: dragAndDropTask,
 }

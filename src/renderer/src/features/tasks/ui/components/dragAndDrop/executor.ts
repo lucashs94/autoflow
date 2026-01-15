@@ -1,0 +1,99 @@
+import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChannel'
+import { NodeExecutor } from '@renderer/features/tasks/types/types'
+import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
+import { isSuccess } from '@shared/@types/ipc-response'
+import { compileTemplate } from '@renderer/lib/handleBars'
+import {
+  formatSelectorForPuppeteer,
+  SelectorType,
+} from '@renderer/types/selectorTypes'
+
+type ExecutorDataProps = {
+  name?: string
+  sourceSelector?: string
+  sourceSelectorType?: SelectorType
+  targetSelector?: string
+  targetSelectorType?: SelectorType
+  timeout?: number
+}
+
+export const dragAndDropExecutor: NodeExecutor<ExecutorDataProps> = async ({
+  context,
+  data,
+  nodeId,
+  outgoingEdges,
+}) => {
+  publishStatus({
+    nodeId,
+    status: 'loading',
+  })
+
+  try {
+    if (!data.sourceSelector) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
+      throw new Error('Source selector not found')
+    }
+
+    if (!data.targetSelector) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
+      throw new Error('Target selector not found')
+    }
+
+    // Resolve templates in selectors
+    const resolvedSourceSelector = compileTemplate(data.sourceSelector)(context)
+    const resolvedTargetSelector = compileTemplate(data.targetSelector)(context)
+
+    // Format selectors for Puppeteer based on type
+    const finalSourceSelector = formatSelectorForPuppeteer(
+      resolvedSourceSelector,
+      data.sourceSelectorType || SelectorType.CSS
+    )
+
+    const finalTargetSelector = formatSelectorForPuppeteer(
+      resolvedTargetSelector,
+      data.targetSelectorType || SelectorType.CSS
+    )
+
+    console.log('Drag and Drop - source:', finalSourceSelector, 'target:', finalTargetSelector)
+
+    const result = await window.api.executions.dragAndDrop(
+      finalSourceSelector,
+      finalTargetSelector,
+      data.timeout
+    )
+
+    if (!isSuccess(result)) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
+      throw new Error(result.error.message)
+    }
+
+    publishStatus({
+      nodeId,
+      status: 'success',
+    })
+
+    return {
+      context: {
+        ...context,
+        [data.name!]: 'true',
+      },
+      nextNodeId: findNextNode(outgoingEdges),
+    }
+  } catch (error) {
+    publishStatus({
+      nodeId,
+      status: 'error',
+    })
+
+    throw error
+  }
+}

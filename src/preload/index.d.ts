@@ -33,6 +33,8 @@ declare global {
           timeout?: number
         ) => Promise<IPCResult<void>>
         getText: (selector: string, timeout?: number) => Promise<IPCResult<{ text: string }>>
+        elementExists: (selector: string, timeout?: number) => Promise<IPCResult<{ exists: boolean }>>
+        dragAndDrop: (sourceSelector: string, targetSelector: string, timeout?: number) => Promise<IPCResult<void>>
         abort: () => Promise<void>
       }
       history: {

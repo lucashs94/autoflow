@@ -9,6 +9,8 @@ export const NodeType = {
   SET_VARIABLES: 'SET_VARIABLES',
   LOOP: 'LOOP',
   GET_TEXT: 'GET_TEXT',
+  ELEMENT_EXISTS: 'ELEMENT_EXISTS',
+  DRAG_AND_DROP: 'DRAG_AND_DROP',
 } as const
 
 export type NodeType = (typeof NodeType)[keyof typeof NodeType]

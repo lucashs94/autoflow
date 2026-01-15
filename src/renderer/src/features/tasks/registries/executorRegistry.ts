@@ -1,6 +1,8 @@
 import { NodeType } from '@renderer/types/nodes'
 import { NodeExecutor } from '../types/types'
 import { clickElementExecutor } from '../ui/components/clickElement/executor'
+import { dragAndDropExecutor } from '../ui/components/dragAndDrop/executor'
+import { elementExistsExecutor } from '../ui/components/elementExists/executor'
 import { getTextExecutor } from '../ui/components/getText/executor'
 import { httpRequestExecutor } from '../ui/components/httpRequest/executor'
 import { loopNodeExecutor } from '../ui/components/loop/executor'
@@ -35,4 +37,6 @@ export function registerAllExecutors() {
   registerExecutor(NodeType.CLICK_ELEMENT, clickElementExecutor)
   registerExecutor(NodeType.LOOP, loopNodeExecutor)
   registerExecutor(NodeType.GET_TEXT, getTextExecutor)
+  registerExecutor(NodeType.ELEMENT_EXISTS, elementExistsExecutor)
+  registerExecutor(NodeType.DRAG_AND_DROP, dragAndDropExecutor)
 }

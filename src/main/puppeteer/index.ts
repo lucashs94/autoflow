@@ -219,4 +219,115 @@ export class BrowserController {
   isReady(): boolean {
     return !!(this.browser && this.page && !this.shouldStop)
   }
+
+  async elementExists({
+    selector,
+    timeout,
+  }: {
+    selector: string
+    timeout?: number
+  }): Promise<boolean> {
+    if (this.shouldStop) {
+      return false
+    }
+
+    if (!this.page || !this.browser || !this.abortController) {
+      throw new Error('No active page to check element')
+    }
+
+    const timeoutMs = timeout ? timeout * 1000 : 5000
+
+    try {
+      // Try to wait for the element with a short timeout
+      const options: any = {
+        signal: this.abortController.signal,
+        timeout: timeoutMs,
+      }
+
+      await this.page.locator(selector).wait(options)
+
+      // If we get here, the element exists
+      return true
+    } catch (error: any) {
+      // If timeout or element not found, element doesn't exist
+      // Check if it's actually an abort signal
+      if (error.name === 'AbortError' || this.abortController.signal.aborted) {
+        throw error // Re-throw abort errors
+      }
+
+      // Element not found within timeout
+      return false
+    }
+  }
+
+  async dragAndDrop({
+    sourceSelector,
+    targetSelector,
+    timeout,
+  }: {
+    sourceSelector: string
+    targetSelector: string
+    timeout?: number
+  }): Promise<void> {
+    if (this.shouldStop) return
+
+    if (!this.page || !this.browser || !this.abortController) {
+      throw new Error('No active page for drag and drop')
+    }
+
+    const timeoutMs = timeout ? timeout * 1000 : 30000
+
+    try {
+      // Wait for source element
+      const sourceOptions: any = {
+        signal: this.abortController.signal,
+        timeout: timeoutMs,
+      }
+      await this.page.locator(sourceSelector).wait(sourceOptions)
+
+      // Wait for target element
+      await this.page.locator(targetSelector).wait(sourceOptions)
+
+      // Get source element
+      const sourceElement = await this.page.$(sourceSelector)
+      if (!sourceElement) {
+        throw new Error(`Source element not found: ${sourceSelector}`)
+      }
+
+      // Get target element
+      const targetElement = await this.page.$(targetSelector)
+      if (!targetElement) {
+        throw new Error(`Target element not found: ${targetSelector}`)
+      }
+
+      // Get bounding boxes
+      const sourceBox = await sourceElement.boundingBox()
+      const targetBox = await targetElement.boundingBox()
+
+      if (!sourceBox) {
+        throw new Error(`Could not get bounding box for source element`)
+      }
+      if (!targetBox) {
+        throw new Error(`Could not get bounding box for target element`)
+      }
+
+      // Calculate center coordinates
+      const startX = sourceBox.x + sourceBox.width / 2
+      const startY = sourceBox.y + sourceBox.height / 2
+      const endX = targetBox.x + targetBox.width / 2
+      const endY = targetBox.y + targetBox.height / 2
+
+      // Execute drag and drop
+      await this.page.mouse.dragAndDrop(
+        { x: startX, y: startY },
+        { x: endX, y: endY },
+        { delay: 100 }
+      )
+    } catch (error: any) {
+      if (error.name === 'AbortError' || this.abortController.signal.aborted) {
+        throw error
+      }
+      throw new Error(`Failed to drag and drop: ${error.message}`)
+    }
+  }
 }

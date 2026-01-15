@@ -67,3 +67,28 @@ export async function getTextService(
     return errorFromException(error, IPCErrorCode.ELEMENT_NOT_FOUND)
   }
 }
+
+export async function elementExistsService(
+  selector: string,
+  timeout?: number
+): Promise<IPCResult<{ exists: boolean }>> {
+  try {
+    const exists = await instance.elementExists({ selector, timeout })
+    return success({ exists })
+  } catch (error) {
+    return errorFromException(error, IPCErrorCode.ELEMENT_NOT_FOUND)
+  }
+}
+
+export async function dragAndDropService(
+  sourceSelector: string,
+  targetSelector: string,
+  timeout?: number
+): Promise<IPCResult<void>> {
+  try {
+    await instance.dragAndDrop({ sourceSelector, targetSelector, timeout })
+    return success(undefined)
+  } catch (error) {
+    return errorFromException(error, IPCErrorCode.ELEMENT_NOT_FOUND)
+  }
+}
