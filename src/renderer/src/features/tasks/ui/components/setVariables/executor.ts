@@ -3,6 +3,7 @@ import { NodeExecutor } from '@renderer/features/tasks/types/types'
 import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
 import { compileTemplate } from '@renderer/lib/handleBars'
 import { verifyMinimunNodeExecutionTime } from '@renderer/utils/minNodeExecutionTime'
+import { ExecutorError, IPCErrorCode } from '@shared/@types/ipc-response'
 
 type ExecutorDataProps = {
   name?: string
@@ -29,7 +30,7 @@ export const setVariableNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
         status: 'error',
       })
 
-      throw new Error(`Variables not found`)
+      throw new ExecutorError(IPCErrorCode.VALIDATION_ERROR, 'Variables not found')
     }
 
     // const variables = JSON.parse(data.variables)

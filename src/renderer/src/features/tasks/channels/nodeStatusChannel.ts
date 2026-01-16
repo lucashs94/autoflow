@@ -1,7 +1,16 @@
 import { NodeStatus } from '@renderer/components/reactFlow/node-status-indicator'
 import { useEffect, useState } from 'react'
 
-type StatusEventDetail = { nodeId: string; status: NodeStatus }
+export type NodeProgress = {
+  current: number
+  total: number
+}
+
+type StatusEventDetail = {
+  nodeId: string
+  status: NodeStatus
+  progress?: NodeProgress
+}
 
 const emitter = new EventTarget()
 
@@ -29,13 +38,17 @@ export function useNodeStatus(params: {
 }) {
   const { nodeId, initialStatus = 'initial' } = params
   const [status, setStatus] = useState<NodeStatus>(initialStatus)
+  const [progress, setProgress] = useState<NodeProgress | undefined>(undefined)
 
   useEffect(() => {
     const unsubscribe = subscribeNodeStatus((u) => {
-      if (u.nodeId === nodeId) setStatus(u.status)
+      if (u.nodeId === nodeId) {
+        setStatus(u.status)
+        setProgress(u.progress)
+      }
     })
     return unsubscribe
   }, [nodeId])
 
-  return status
+  return { status, progress }
 }

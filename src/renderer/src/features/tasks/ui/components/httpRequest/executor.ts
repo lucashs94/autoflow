@@ -3,6 +3,7 @@ import { publishStatus } from '../../../channels/nodeStatusChannel'
 import { NodeExecutor } from '../../../types/types'
 import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
 import { compileTemplate } from '@renderer/lib/handleBars'
+import { ExecutorError, IPCErrorCode } from '@shared/@types/ipc-response'
 
 type ExecutorDataProps = {
   name?: string
@@ -41,7 +42,7 @@ export const httpRequestExecutor: NodeExecutor<ExecutorDataProps> = async ({
         status: 'error',
       })
 
-      throw new Error(`HTTP Request node: No all infos configured`)
+      throw new ExecutorError(IPCErrorCode.VALIDATION_ERROR, 'HTTP Request node: Not all infos configured')
     }
 
     const method = data.method

@@ -32,6 +32,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { FilterBuilder } from '../shared/filters/FilterBuilder'
+import { RetrySettings } from '../shared/RetrySettings'
 
 const formSchema = z.object({
   selector: z.string().min(1, { message: 'Selector is required' }),
@@ -42,6 +43,8 @@ const formSchema = z.object({
     .min(1)
     .max(60, { message: 'Should be lower than 60' }),
   filters: z.array(z.any()).default([]),
+  retryAttempts: z.coerce.number().min(1).max(5).default(1),
+  retryDelaySeconds: z.coerce.number().min(1).max(10).default(2),
 })
 
 export type FormValues = z.input<typeof formSchema>
@@ -65,6 +68,9 @@ export const SettingsDialog = ({
     Boolean(defaultValues.filters?.length)
   )
   const [isSelectorValid, setIsSelectorValid] = useState(true)
+  const [isRetryEnabled, setIsRetryEnabled] = useState(
+    (defaultValues.retryAttempts ?? 1) > 1
+  )
 
   const { workflowId } = useParams({ from: '/(main)/workflows/$workflowId/' })
   const { data: workflow } = useWorkflow(workflowId)
@@ -87,6 +93,8 @@ export const SettingsDialog = ({
     text: defaultValues?.text ?? '',
     timeout: defaultValues?.timeout ?? 30,
     filters: defaultValues?.filters ?? [],
+    retryAttempts: defaultValues?.retryAttempts ?? 1,
+    retryDelaySeconds: defaultValues?.retryDelaySeconds ?? 2,
   }
 
   const form = useForm<FormValues>({
@@ -123,9 +131,12 @@ export const SettingsDialog = ({
         text: defaultValues.text || '',
         timeout: defaultValues.timeout || 30,
         filters: defaultValues.filters || [],
+        retryAttempts: defaultValues.retryAttempts ?? 1,
+        retryDelaySeconds: defaultValues.retryDelaySeconds ?? 2,
       })
       // Reset validation state
       setIsSelectorValid(true)
+      setIsRetryEnabled((defaultValues.retryAttempts ?? 1) > 1)
     }
   }, [open, defaultValues, form])
 
@@ -252,6 +263,22 @@ export const SettingsDialog = ({
               onEnabledChange={setIsAdvancedFiltersEnabled}
               disabled={selectedSelectorType === SelectorType.XPATH}
               disabledReason="Advanced filters are not compatible with XPath selectors. Please use CSS selector type to enable filters."
+            />
+
+            <RetrySettings
+              enabled={isRetryEnabled}
+              onEnabledChange={(enabled) => {
+                setIsRetryEnabled(enabled)
+                if (!enabled) {
+                  form.setValue('retryAttempts', 1)
+                } else {
+                  form.setValue('retryAttempts', 2)
+                }
+              }}
+              attempts={form.watch('retryAttempts')}
+              onAttemptsChange={(attempts) => form.setValue('retryAttempts', attempts)}
+              delaySeconds={form.watch('retryDelaySeconds')}
+              onDelayChange={(delay) => form.setValue('retryDelaySeconds', delay)}
             />
 
             <DialogFooter className="mt-4">

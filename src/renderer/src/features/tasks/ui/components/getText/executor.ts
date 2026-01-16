@@ -3,7 +3,7 @@ import { NodeExecutor } from '@renderer/features/tasks/types/types'
 import { ElementFilter } from '@renderer/features/tasks/types/filters'
 import { filtersToSelector } from '@renderer/features/tasks/utils/filterToSelector'
 import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
-import { isSuccess } from '@shared/@types/ipc-response'
+import { ExecutorError, IPCErrorCode, isSuccess } from '@shared/@types/ipc-response'
 import { compileTemplate } from '@renderer/lib/handleBars'
 import {
   formatSelectorForPuppeteer,
@@ -16,6 +16,8 @@ type ExecutorDataProps = {
   selectorType?: SelectorType
   timeout?: number
   filters?: ElementFilter[]
+  retryAttempts?: number
+  retryDelaySeconds?: number
 }
 
 export const getTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
@@ -36,7 +38,7 @@ export const getTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
         status: 'error',
       })
 
-      throw new Error(`Selector not found`)
+      throw new ExecutorError(IPCErrorCode.VALIDATION_ERROR, 'Selector not found')
     }
 
     // Resolve template in selector
@@ -52,7 +54,8 @@ export const getTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
         nodeId,
         status: 'error',
       })
-      throw new Error(
+      throw new ExecutorError(
+        IPCErrorCode.VALIDATION_ERROR,
         'Advanced filters are not compatible with XPath selectors. Please use CSS selector type or remove filters.'
       )
     }
@@ -71,26 +74,45 @@ export const getTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
 
     console.log('Final selector:', finalSelector)
 
-    const result = await window.api.executions.getText(finalSelector, data.timeout)
+    const maxAttempts = data.retryAttempts ?? 1
+    const delayMs = (data.retryDelaySeconds ?? 2) * 1000
+    let lastError: ExecutorError | null = null
+    let successResult: { text: string } | null = null
 
-    if (!isSuccess(result)) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const result = await window.api.executions.getText(finalSelector, data.timeout)
+
+      if (isSuccess(result)) {
+        publishStatus({
+          nodeId,
+          status: 'success',
+        })
+        successResult = result.data
+        lastError = null
+        break
+      }
+
+      lastError = ExecutorError.fromIPCError(result.error)
+
+      if (attempt < maxAttempts) {
+        console.log(`Get text failed, retrying (${attempt}/${maxAttempts})...`)
+        await new Promise((resolve) => setTimeout(resolve, delayMs))
+      }
+    }
+
+    if (lastError) {
       publishStatus({
         nodeId,
         status: 'error',
       })
-      throw new Error(result.error.message)
+      throw lastError
     }
-
-    publishStatus({
-      nodeId,
-      status: 'success',
-    })
 
     return {
       context: {
         ...context,
         [data.name!]: {
-          text: result.data.text,
+          text: successResult!.text,
         },
       },
       nextNodeId: findNextNode(outgoingEdges),

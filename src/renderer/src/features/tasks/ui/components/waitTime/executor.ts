@@ -2,6 +2,7 @@ import { publishStatus } from '@renderer/features/tasks/channels/nodeStatusChann
 import { NodeExecutor } from '@renderer/features/tasks/types/types'
 import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
 import { compileTemplate } from '@renderer/lib/handleBars'
+import { ExecutorError, IPCErrorCode } from '@shared/@types/ipc-response'
 
 type ExecutorDataProps = {
   name?: string
@@ -27,7 +28,7 @@ export const waitTimeNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
         status: 'error',
       })
 
-      throw new Error(`timeInSeconds is required`)
+      throw new ExecutorError(IPCErrorCode.VALIDATION_ERROR, 'timeInSeconds is required')
     }
 
     // Resolve template in time (can be a number or template string)
@@ -40,7 +41,7 @@ export const waitTimeNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
         status: 'error',
       })
 
-      throw new Error(`timeInSeconds must be a valid number`)
+      throw new ExecutorError(IPCErrorCode.VALIDATION_ERROR, 'timeInSeconds must be a valid number')
     }
 
     // Make wait time cancellable

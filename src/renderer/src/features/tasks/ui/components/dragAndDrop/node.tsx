@@ -26,7 +26,7 @@ export const DragAndDropNode = memo(
     const [dialogOpen, setDialogOpen] = useState(false)
     const { setNodes } = useReactFlow()
 
-    const nodeStatus = useNodeStatus({
+    const { status: nodeStatus } = useNodeStatus({
       nodeId: props.id,
     })
 

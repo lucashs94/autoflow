@@ -8,6 +8,7 @@ import {
   formatSelectorForPuppeteer,
   SelectorType,
 } from '@renderer/types/selectorTypes'
+import { ExecutorError, IPCErrorCode } from '@shared/@types/ipc-response'
 
 type ExecutorDataProps = {
   name?: string
@@ -15,6 +16,8 @@ type ExecutorDataProps = {
   selectorType?: SelectorType
   timeout?: number
   filters?: ElementFilter[]
+  retryAttempts?: number
+  retryDelaySeconds?: number
 }
 
 export const elementExistsExecutor: NodeExecutor<ExecutorDataProps> = async ({
@@ -35,7 +38,7 @@ export const elementExistsExecutor: NodeExecutor<ExecutorDataProps> = async ({
         status: 'error',
       })
 
-      throw new Error(`Selector not found`)
+      throw new ExecutorError(IPCErrorCode.VALIDATION_ERROR, 'Selector not found')
     }
 
     // Resolve template in selector
@@ -51,7 +54,8 @@ export const elementExistsExecutor: NodeExecutor<ExecutorDataProps> = async ({
         nodeId,
         status: 'error',
       })
-      throw new Error(
+      throw new ExecutorError(
+        IPCErrorCode.VALIDATION_ERROR,
         'Advanced filters are not compatible with XPath selectors. Please use CSS selector type or remove filters.'
       )
     }
@@ -70,13 +74,37 @@ export const elementExistsExecutor: NodeExecutor<ExecutorDataProps> = async ({
 
     console.log('Element exists check - selector:', finalSelector)
 
-    // Call the elementExists API - this returns boolean, not throws
-    const result = await window.api.executions.elementExists(
-      finalSelector,
-      data.timeout
-    )
+    const maxAttempts = data.retryAttempts ?? 1
+    const delayMs = (data.retryDelaySeconds ?? 2) * 1000
+    let exists = false
+    let apiCallSucceeded = false
 
-    const exists = result.success && result.data?.exists === true
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      // Call the elementExists API - this returns boolean, not throws
+      const result = await window.api.executions.elementExists(
+        finalSelector,
+        data.timeout
+      )
+
+      if (result.success) {
+        exists = result.data?.exists === true
+        apiCallSucceeded = true
+        break
+      }
+
+      if (attempt < maxAttempts) {
+        console.log(`Element exists check failed, retrying (${attempt}/${maxAttempts})...`)
+        await new Promise((resolve) => setTimeout(resolve, delayMs))
+      }
+    }
+
+    if (!apiCallSucceeded) {
+      publishStatus({
+        nodeId,
+        status: 'error',
+      })
+      throw new ExecutorError(IPCErrorCode.UNKNOWN_ERROR, 'Failed to check if element exists')
+    }
 
     console.log('Element exists result:', exists)
 

@@ -17,6 +17,8 @@ type NodeProps = {
   selectorType?: SelectorType
   timeout?: number
   filters?: ElementFilter[]
+  retryAttempts?: number
+  retryDelaySeconds?: number
 }
 
 type NodeType = Node<NodeProps>
@@ -26,7 +28,7 @@ export const ClickElementNode = memo(
     const [dialogOpen, setDialogOpen] = useState(false)
     const { setNodes } = useReactFlow()
 
-    const nodeStatus = useNodeStatus({
+    const { status: nodeStatus } = useNodeStatus({
       nodeId: props.id,
     })
 

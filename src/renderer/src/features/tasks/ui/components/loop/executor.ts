@@ -6,7 +6,7 @@ import { topologicalSort } from '@renderer/features/workflows/utils/topologicalS
 import { compileTemplate } from '@renderer/lib/handleBars'
 import { NodeType } from '@renderer/types/nodes'
 import { verifyMinimunNodeExecutionTime } from '@renderer/utils/minNodeExecutionTime'
-import { isSuccess } from '@shared/@types/ipc-response'
+import { ExecutorError, IPCErrorCode, isSuccess } from '@shared/@types/ipc-response'
 
 type ExecutorDataProps = {
   name?: string
@@ -35,7 +35,7 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
         nodeId,
         status: 'error',
       })
-      throw new Error(`variable is required`)
+      throw new ExecutorError(IPCErrorCode.VALIDATION_ERROR, 'variable is required')
     }
 
     const workflowResult = await window.api.workflows.getOne(workflowId)
@@ -45,14 +45,14 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
         nodeId,
         status: 'error',
       })
-      throw new Error(workflowResult.error.message)
+      throw ExecutorError.fromIPCError(workflowResult.error)
     }
 
     const workflow = workflowResult.data
 
     const rootNode = workflow.nodes.find((n) => n.id === nodeId)
     if (!rootNode) {
-      throw new Error(`Workflow must have an initial node!`)
+      throw new ExecutorError(IPCErrorCode.NODE_NOT_FOUND, 'Workflow must have an initial node!')
     }
 
     const compiledTemplate = compileTemplate(data.variableList!)(context)
@@ -65,7 +65,7 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
         status: 'error',
       })
 
-      throw new Error(`variable must be an array`)
+      throw new ExecutorError(IPCErrorCode.VALIDATION_ERROR, 'variable must be an array')
     }
 
     const nextNodes = topologicalSort(workflow.nodes, workflow.edges, rootNode)
@@ -83,7 +83,7 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
         status: 'error',
       })
 
-      throw new Error(`loop must have a connected final node`)
+      throw new ExecutorError(IPCErrorCode.INVALID_WORKFLOW, 'loop must have a connected final node')
     }
 
     // Track results from each iteration for context preservation
@@ -97,6 +97,16 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
         console.log('Loop cancelled - stopping iterations')
         throw new Error('Loop execution cancelled')
       }
+
+      // Publish loop progress
+      publishStatus({
+        nodeId,
+        status: 'loading',
+        progress: {
+          current: currentIndex + 1,
+          total: vars.length,
+        },
+      })
 
       nextNodes.forEach((node) => {
         if (node.type !== NodeType.LOOP) {
@@ -174,6 +184,12 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
             })
           }
         } catch (error) {
+          // Extract error code if it's an ExecutorError
+          const errorCode =
+            error instanceof ExecutorError
+              ? error.code
+              : IPCErrorCode.UNKNOWN_ERROR
+
           // Log failed node execution inside loop
           if (executionId) {
             await window.api.history.logNodeExecution({
@@ -188,6 +204,7 @@ export const loopNodeExecutor: NodeExecutor<ExecutorDataProps> = async ({
               duration: Date.now() - nodeStartTime,
               context_snapshot: internalContext,
               error: error instanceof Error ? error.message : String(error),
+              error_code: errorCode,
             })
           }
 

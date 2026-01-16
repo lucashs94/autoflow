@@ -3,7 +3,7 @@ import { NodeExecutor } from '@renderer/features/tasks/types/types'
 import { ElementFilter } from '@renderer/features/tasks/types/filters'
 import { filtersToSelector } from '@renderer/features/tasks/utils/filterToSelector'
 import { findNextNode } from '@renderer/features/workflows/utils/findNextNode'
-import { isSuccess } from '@shared/@types/ipc-response'
+import { ExecutorError, IPCErrorCode, isSuccess } from '@shared/@types/ipc-response'
 import { compileTemplate } from '@renderer/lib/handleBars'
 import {
   formatSelectorForPuppeteer,
@@ -17,6 +17,8 @@ type ExecutorDataProps = {
   shouldBe?: 'visible' | 'hidden'
   timeout?: number
   filters?: ElementFilter[]
+  retryAttempts?: number
+  retryDelaySeconds?: number
 }
 
 export const waitForElementNodeExecutor: NodeExecutor<
@@ -34,7 +36,7 @@ export const waitForElementNodeExecutor: NodeExecutor<
         status: 'error',
       })
 
-      throw new Error(`Selector or visibility state not found`)
+      throw new ExecutorError(IPCErrorCode.VALIDATION_ERROR, 'Selector or visibility state not found')
     }
 
     // Resolve template in selector
@@ -50,7 +52,8 @@ export const waitForElementNodeExecutor: NodeExecutor<
         nodeId,
         status: 'error',
       })
-      throw new Error(
+      throw new ExecutorError(
+        IPCErrorCode.VALIDATION_ERROR,
         'Advanced filters are not compatible with XPath selectors. Please use CSS selector type or remove filters.'
       )
     }
@@ -69,24 +72,41 @@ export const waitForElementNodeExecutor: NodeExecutor<
 
     console.log('Final selector:', finalSelector)
 
-    const result = await window.api.executions.waitForElement(
-      finalSelector,
-      data.shouldBe,
-      data.timeout
-    )
+    const maxAttempts = data.retryAttempts ?? 1
+    const delayMs = (data.retryDelaySeconds ?? 2) * 1000
+    let lastError: ExecutorError | null = null
 
-    if (!isSuccess(result)) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const result = await window.api.executions.waitForElement(
+        finalSelector,
+        data.shouldBe,
+        data.timeout
+      )
+
+      if (isSuccess(result)) {
+        publishStatus({
+          nodeId,
+          status: 'success',
+        })
+        lastError = null
+        break
+      }
+
+      lastError = ExecutorError.fromIPCError(result.error)
+
+      if (attempt < maxAttempts) {
+        console.log(`Wait for element failed, retrying (${attempt}/${maxAttempts})...`)
+        await new Promise((resolve) => setTimeout(resolve, delayMs))
+      }
+    }
+
+    if (lastError) {
       publishStatus({
         nodeId,
         status: 'error',
       })
-      throw new Error(result.error.message)
+      throw lastError
     }
-
-    publishStatus({
-      nodeId,
-      status: 'success',
-    })
 
     return {
       context: {

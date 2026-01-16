@@ -28,9 +28,12 @@ import { useParams } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { RetrySettings } from '../shared/RetrySettings'
 
 const formSchema = z.object({
   url: z.string().min(1, { message: 'Please enter a valid URL' }),
+  retryAttempts: z.coerce.number().min(1).max(5).default(1),
+  retryDelaySeconds: z.coerce.number().min(1).max(10).default(2),
 })
 
 export type FormValues = z.infer<typeof formSchema>
@@ -51,6 +54,9 @@ export const SettingsDialog = ({
   defaultValues = {},
 }: Props) => {
   const [isUrlValid, setIsUrlValid] = useState(true)
+  const [isRetryEnabled, setIsRetryEnabled] = useState(
+    (defaultValues.retryAttempts ?? 1) > 1
+  )
 
   const { workflowId } = useParams({ from: '/(main)/workflows/$workflowId/' })
   const { data: workflow } = useWorkflow(workflowId)
@@ -71,6 +77,8 @@ export const SettingsDialog = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       url: defaultValues.url || '',
+      retryAttempts: defaultValues.retryAttempts ?? 1,
+      retryDelaySeconds: defaultValues.retryDelaySeconds ?? 2,
     },
   })
 
@@ -83,9 +91,12 @@ export const SettingsDialog = ({
     if (open) {
       form.reset({
         url: defaultValues.url || '',
+        retryAttempts: defaultValues.retryAttempts ?? 1,
+        retryDelaySeconds: defaultValues.retryDelaySeconds ?? 2,
       })
       // Reset validation state
       setIsUrlValid(true)
+      setIsRetryEnabled((defaultValues.retryAttempts ?? 1) > 1)
     }
   }, [open, defaultValues, form])
 
@@ -138,6 +149,22 @@ export const SettingsDialog = ({
                   <FormMessage />
                 </FormItem>
               )}
+            />
+
+            <RetrySettings
+              enabled={isRetryEnabled}
+              onEnabledChange={(enabled) => {
+                setIsRetryEnabled(enabled)
+                if (!enabled) {
+                  form.setValue('retryAttempts', 1)
+                } else {
+                  form.setValue('retryAttempts', 2)
+                }
+              }}
+              attempts={form.watch('retryAttempts')}
+              onAttemptsChange={(attempts) => form.setValue('retryAttempts', attempts)}
+              delaySeconds={form.watch('retryDelaySeconds')}
+              onDelayChange={(delay) => form.setValue('retryDelaySeconds', delay)}
             />
 
             <DialogFooter className="mt-4">
