@@ -307,3 +307,37 @@ export function isSuccess<T>(result: IPCResult<T>): result is IPCSuccess<T> {
 export function isError<T>(result: IPCResult<T>): result is IPCError {
   return result.success === false
 }
+
+/**
+ * Error class for executor/workflow errors with typed error codes
+ *
+ * Used by executors to throw errors that preserve the IPC error code
+ * for categorization and display in the UI.
+ *
+ * @example
+ * ```typescript
+ * if (!isSuccess(result)) {
+ *   throw ExecutorError.fromIPCError(result.error)
+ * }
+ * ```
+ */
+export class ExecutorError extends Error {
+  constructor(
+    public code: IPCErrorCode,
+    message: string
+  ) {
+    super(message)
+    this.name = 'ExecutorError'
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ExecutorError)
+    }
+  }
+
+  /**
+   * Creates an ExecutorError from an IPCErrorDetails object
+   */
+  static fromIPCError(error: IPCErrorDetails): ExecutorError {
+    return new ExecutorError(error.code, error.message)
+  }
+}
