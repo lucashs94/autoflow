@@ -56,6 +56,7 @@ export function RetrySettings({
             Retry on Failure
           </motion.h3>
         </div>
+
         <Switch
           checked={enabled}
           onCheckedChange={onEnabledChange}
@@ -70,8 +71,9 @@ export function RetrySettings({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             style={{ overflow: 'hidden' }}
+            className="px-2 pb-3"
           >
-            <div className="mt-4 mb-2">
+            <div className="mt-1 mb-2">
               <p className="text-sm text-muted-foreground">
                 Automatically retry if this node fails
               </p>
@@ -83,6 +85,7 @@ export function RetrySettings({
                   <FormLabel>Max Attempts:</FormLabel>
                   <span className="text-sm font-medium">{attempts}</span>
                 </div>
+
                 <FormControl>
                   <Slider
                     min={2}
