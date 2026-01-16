@@ -8,6 +8,8 @@ import {
 } from '@renderer/components/ui/dropdown-menu'
 import { Switch } from '@renderer/components/ui/switch'
 import { exportWorkflow } from '@renderer/features/workflows/functions/exportWorkflow'
+import { isSuccess } from '@shared/@types/ipc-response'
+import { useNavigate } from '@tanstack/react-router'
 import {
   CopyIcon,
   DownloadIcon,
@@ -24,7 +26,6 @@ interface WorkflowOptionsMenuProps {
   workflowName: string
   headless?: boolean
   onImport?: () => void
-  onDuplicate?: () => void
   onDelete?: () => void
   onSettings?: () => void
 }
@@ -34,13 +35,14 @@ export function WorkflowOptionsMenu({
   workflowName: _workflowName,
   headless = true,
   onImport,
-  onDuplicate,
   onDelete,
   onSettings,
 }: WorkflowOptionsMenuProps) {
-  void _workflowName // Will be used for duplicate
+  void _workflowName
+  const navigate = useNavigate()
   const [isVisualMode, setIsVisualMode] = useState(!headless)
   const [isExporting, setIsExporting] = useState(false)
+  const [isDuplicating, setIsDuplicating] = useState(false)
   const [isSavingHeadless, setIsSavingHeadless] = useState(false)
 
   // Sync state with prop
@@ -83,8 +85,27 @@ export function WorkflowOptionsMenu({
     onImport?.()
   }
 
-  const handleDuplicate = () => {
-    onDuplicate?.()
+  const handleDuplicate = async () => {
+    if (isDuplicating) return
+
+    try {
+      setIsDuplicating(true)
+      const result = await window.api.workflows.duplicate(workflowId)
+
+      if (isSuccess(result)) {
+        // Navigate to the new duplicated workflow
+        navigate({
+          to: '/workflows/$workflowId',
+          params: { workflowId: result.data.workflowId },
+        })
+      } else {
+        console.error('Failed to duplicate workflow:', result.error.message)
+      }
+    } catch (error) {
+      console.error('Failed to duplicate workflow:', error)
+    } finally {
+      setIsDuplicating(false)
+    }
   }
 
   const handleDelete = () => {
@@ -161,10 +182,10 @@ export function WorkflowOptionsMenu({
         {/* Duplicate/Delete */}
         <DropdownMenuItem
           onClick={handleDuplicate}
-          disabled={!onDuplicate}
+          disabled={isDuplicating}
         >
           <CopyIcon className="size-4" />
-          <span>Duplicate Workflow</span>
+          <span>{isDuplicating ? 'Duplicating...' : 'Duplicate Workflow'}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem

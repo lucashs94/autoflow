@@ -31,13 +31,15 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useSetAtom } from 'jotai'
 import { Loader2Icon, UploadIcon } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getSnapshot, verifyHasChanges } from '../../utils/hasChanges'
 import { AddNodeBtn } from '../components/addNodeBtn'
+import { DeleteWorkflowDialog } from '../components/deleteWorkflowDialog'
 import { EditorHeaderName } from '../components/editorHeaderName'
 import { ExecuteWorkflowBtn } from '../components/executeWorkflowBtn'
 import { SaveWorkflowBtn } from '../components/saveWorkflowBtn'
 import { WorkflowOptionsMenu } from '../components/workflowOptionsMenu'
+import { WorkflowSettingsDialog } from '../components/workflowSettingsDialog'
 
 const edgeTypes = {
   default: DeletableEdge,
@@ -52,6 +54,8 @@ export function Editor({ workflowId }: { workflowId: string }) {
   const [nodes, setNodes] = useState<Node[]>(workflow?.nodes || [])
   const [edges, setEdges] = useState<Edge[]>(workflow?.edges || [])
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
   const [isDraggingFile, setIsDraggingFile] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
 
@@ -150,7 +154,9 @@ export function Editor({ workflowId }: { workflowId: string }) {
     [nodes, edges]
   )
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+  const onKeyDown = (
+    e: React.KeyboardEvent<HTMLDivElement> | KeyboardEvent
+  ) => {
     const isSave = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'
 
     if (!isSave) return
@@ -164,6 +170,14 @@ export function Editor({ workflowId }: { workflowId: string }) {
       edges,
     })
   }
+
+  useEffect(() => {
+    window.addEventListener('keydown', onKeyDown, { capture: true })
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, { capture: true })
+    }
+  }, [onKeyDown, saveWorkflow])
 
   const snapshot = getSnapshot(workflow)
   const hasChanges = verifyHasChanges(nodes, edges, snapshot)
@@ -250,6 +264,8 @@ export function Editor({ workflowId }: { workflowId: string }) {
               workflowName={workflow?.name || ''}
               headless={workflow?.headless ?? true}
               onImport={() => setIsImportDialogOpen(true)}
+              onDelete={() => setIsDeleteDialogOpen(true)}
+              onSettings={() => setIsSettingsDialogOpen(true)}
             />
           </div>
 
@@ -266,6 +282,22 @@ export function Editor({ workflowId }: { workflowId: string }) {
         open={isImportDialogOpen}
         onOpenChange={setIsImportDialogOpen}
         onImportSuccess={() => window.location.reload()}
+      />
+
+      <DeleteWorkflowDialog
+        workflowId={workflowId}
+        workflowName={workflow?.name || ''}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      />
+
+      <WorkflowSettingsDialog
+        workflowId={workflowId}
+        workflowName={workflow?.name || ''}
+        headless={workflow?.headless ?? true}
+        open={isSettingsDialogOpen}
+        onOpenChange={setIsSettingsDialogOpen}
+        onSave={() => window.location.reload()}
       />
     </div>
   )

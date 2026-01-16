@@ -4,7 +4,7 @@ import {
   registerAllExecutors,
 } from '@renderer/features/tasks/registries/executorRegistry'
 import { NodeType } from '@renderer/types/nodes'
-import { isSuccess } from '@shared/@types/ipc-response'
+import { ExecutorError, IPCErrorCode, isSuccess } from '@shared/@types/ipc-response'
 
 const MAX_NODE_EXECUTIONS = 1000
 
@@ -151,6 +151,12 @@ export async function executeWorkflow(
           context_snapshot: context,
         })
       } catch (error) {
+        // Extract error code if it's an ExecutorError
+        const errorCode =
+          error instanceof ExecutorError
+            ? error.code
+            : IPCErrorCode.UNKNOWN_ERROR
+
         // Log failed node execution
         await window.api.history.logNodeExecution({
           id: crypto.randomUUID(),
@@ -164,6 +170,7 @@ export async function executeWorkflow(
           duration: Date.now() - nodeStartTime,
           context_snapshot: context,
           error: error instanceof Error ? error.message : String(error),
+          error_code: errorCode,
         })
 
         // Check if it was cancelled during execution

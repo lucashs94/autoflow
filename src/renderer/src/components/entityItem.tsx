@@ -1,14 +1,24 @@
 import { cn } from '@renderer/lib/utils'
 import { Link } from '@tanstack/react-router'
-import { MoreVerticalIcon, TrashIcon } from 'lucide-react'
+import { LucideIcon, MoreVerticalIcon } from 'lucide-react'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from './ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
+
+export interface MenuItemConfig {
+  label: string
+  icon?: LucideIcon
+  onClick: () => void | Promise<void>
+  disabled?: boolean
+  variant?: 'default' | 'destructive'
+  separator?: boolean
+}
 
 interface EntityItemProps {
   href: string
@@ -16,8 +26,8 @@ interface EntityItemProps {
   subtitle?: React.ReactNode
   image?: React.ReactNode
   actions?: React.ReactNode
-  onRemove?: () => void | Promise<void>
-  isRemoving?: boolean
+  menuItems?: MenuItemConfig[]
+  disabled?: boolean
   className?: string
 }
 
@@ -27,25 +37,16 @@ export const EntityItem = ({
   subtitle,
   image,
   actions,
-  onRemove,
-  isRemoving,
+  menuItems,
+  disabled,
   className,
 }: EntityItemProps) => {
-  const handleRemove = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-
-    if (isRemoving) return
-
-    if (onRemove) await onRemove()
-  }
-
   return (
     <Link to={href}>
       <Card
         className={cn(
           'p-4 shadow-none! hover:shadow! cursor-pointer hover:scale-[1.01]',
-          isRemoving && 'opacity-50 cursor-not-allowed',
+          disabled && 'opacity-50 cursor-not-allowed',
           className
         )}
       >
@@ -62,10 +63,10 @@ export const EntityItem = ({
             </div>
           </div>
 
-          {(actions || onRemove) && (
+          {(actions || (menuItems && menuItems.length > 0)) && (
             <div className="flex gap-x-4 items-center">
               {actions}
-              {onRemove && (
+              {menuItems && menuItems.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -81,13 +82,32 @@ export const EntityItem = ({
                     align="end"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <DropdownMenuItem
-                      onClick={handleRemove}
-                      className="text-destructive hover:text-destructive!"
-                    >
-                      <TrashIcon className="size-4 text-destructive" />
-                      Delete
-                    </DropdownMenuItem>
+                    {menuItems.map((item, index) => (
+                      <div key={index}>
+                        {item.separator && index > 0 && <DropdownMenuSeparator />}
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            item.onClick()
+                          }}
+                          disabled={item.disabled}
+                          className={cn(
+                            item.variant === 'destructive' &&
+                              'text-destructive hover:text-destructive!'
+                          )}
+                        >
+                          {item.icon && (
+                            <item.icon
+                              className={cn(
+                                'size-4',
+                                item.variant === 'destructive' && 'text-destructive'
+                              )}
+                            />
+                          )}
+                          {item.label}
+                        </DropdownMenuItem>
+                      </div>
+                    ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}

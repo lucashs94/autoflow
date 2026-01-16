@@ -47,7 +47,12 @@ export function ImportWorkflowDialog({
         setIsImporting(true)
         setError(null)
 
-        await importWorkflow(file, workflowId)
+        await importWorkflow({
+          file,
+          workflowId,
+          currentNodes,
+          currentEdges,
+        })
 
         // Close dialog and trigger reload
         onOpenChange(false)
@@ -57,7 +62,7 @@ export function ImportWorkflowDialog({
         setIsImporting(false)
       }
     },
-    [isImporting, workflowId, onOpenChange, onImportSuccess]
+    [isImporting, workflowId, currentNodes, currentEdges, onOpenChange, onImportSuccess]
   )
 
   const handleDrop = useCallback(
