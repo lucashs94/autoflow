@@ -59,6 +59,9 @@ export function Editor({ workflowId }: { workflowId: string }) {
   const [isDraggingFile, setIsDraggingFile] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
 
+  const snapshot = getSnapshot(workflow)
+  const hasChanges = verifyHasChanges(nodes, edges, snapshot)
+
   const handleFileDrop = useCallback(
     async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault()
@@ -179,9 +182,6 @@ export function Editor({ workflowId }: { workflowId: string }) {
     }
   }, [onKeyDown, saveWorkflow])
 
-  const snapshot = getSnapshot(workflow)
-  const hasChanges = verifyHasChanges(nodes, edges, snapshot)
-
   return (
     <div
       className="size-full bg-muted relative"
@@ -193,8 +193,8 @@ export function Editor({ workflowId }: { workflowId: string }) {
     >
       {/* File drop overlay */}
       {(isDraggingFile || isImporting) && (
-        <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4 p-8 rounded-lg border-2 border-dashed border-primary bg-background">
+        <div className="absolute inset-0 z-50 backdrop-blur-sm flex items-center justify-center bg-background/40">
+          <div className="flex flex-col items-center gap-4 p-30 px-50 rounded-lg bg-background/80 border-dashed! border-primary! border-2">
             {isImporting ? (
               <>
                 <Loader2Icon className="size-12 text-primary animate-spin" />
