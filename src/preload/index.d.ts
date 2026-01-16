@@ -19,6 +19,7 @@ declare global {
           edges: edgesServiceType[]
         ) => Promise<IPCResult<void>>
         updateHeadless: (workflowId: string, headless: boolean) => Promise<IPCResult<void>>
+        duplicate: (workflowId: string) => Promise<IPCResult<{ workflowId: string; name: string }>>
       }
       nodes: {
         getOne: (nodeId: string) => Promise<IPCResult<NodeType>>
@@ -67,6 +68,7 @@ declare global {
           duration?: number
           context_snapshot: Record<string, unknown>
           error?: string
+          error_code?: string
         }) => Promise<IPCResult<void>>
         getAllExecutions: (limit?: number) => Promise<IPCResult<any[]>>
         getExecutionById: (id: string) => Promise<IPCResult<any>>

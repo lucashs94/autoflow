@@ -96,4 +96,18 @@ try {
   console.error('Migration error:', err)
 }
 
+// Migration: Add error_code column to node_execution_log table if it doesn't exist
+try {
+  const nodeLogTableInfo = db.prepare('PRAGMA table_info(node_execution_log)').all() as Array<{ name: string }>
+  const hasErrorCode = nodeLogTableInfo.some((col) => col.name === 'error_code')
+
+  if (!hasErrorCode) {
+    console.log('🔄 Running migration: Adding error_code column to node_execution_log...')
+    db.exec('ALTER TABLE node_execution_log ADD COLUMN error_code TEXT')
+    console.log('✔ Migration completed.')
+  }
+} catch (err) {
+  console.error('Migration error:', err)
+}
+
 console.log('✔ Banco inicializado.')

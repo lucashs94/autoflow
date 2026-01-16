@@ -25,6 +25,7 @@ export interface NodeExecutionLog {
   duration: number | null
   context_snapshot: string | null
   error: string | null
+  error_code: string | null
 }
 
 export interface CreateExecutionParams {
@@ -56,6 +57,7 @@ export interface LogNodeExecutionParams {
   duration?: number
   context_snapshot: Record<string, unknown>
   error?: string
+  error_code?: string
 }
 
 // Database operations
@@ -106,8 +108,8 @@ export function logNodeExecution(params: LogNodeExecutionParams): void {
   const stmt = db.prepare(`
     INSERT INTO node_execution_log (
       id, execution_id, node_id, node_name, node_type, status,
-      started_at, finished_at, duration, context_snapshot, error
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      started_at, finished_at, duration, context_snapshot, error, error_code
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
 
   stmt.run(
@@ -121,7 +123,8 @@ export function logNodeExecution(params: LogNodeExecutionParams): void {
     params.finished_at || null,
     params.duration || null,
     JSON.stringify(params.context_snapshot),
-    params.error || null
+    params.error || null,
+    params.error_code || null
   )
 }
 

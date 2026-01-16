@@ -18,4 +18,6 @@ export const workflows = {
   ) => ipcRenderer.invoke('workflows:update', workflowId, nodes, edges),
   updateHeadless: (workflowId: string, headless: boolean) =>
     ipcRenderer.invoke('workflows:updateHeadless', workflowId, headless),
+  duplicate: (workflowId: string) =>
+    ipcRenderer.invoke('workflows:duplicate', workflowId),
 }

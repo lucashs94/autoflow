@@ -30,6 +30,7 @@ export const history = {
     duration?: number
     context_snapshot: Record<string, unknown>
     error?: string
+    error_code?: string
   }) => ipcRenderer.invoke('history:logNodeExecution', params),
 
   getAllExecutions: (limit?: number) =>

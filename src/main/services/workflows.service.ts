@@ -1,3 +1,4 @@
+import { createId } from '@paralleldrive/cuid2'
 import type { Node as FlowNode } from '@xyflow/react'
 import { edgesServiceType, WorkflowServiceReturnType } from '../@types/workflows'
 import type { WorkflowType } from '../db/types'
@@ -151,6 +152,60 @@ export function updateWorkflowService(
 
     updateWorkflow(workflowId, nodeTypes, edgeTypes)
     return success(undefined)
+  } catch (err) {
+    return errorFromException(err, IPCErrorCode.DATABASE_ERROR)
+  }
+}
+
+export function duplicateWorkflowService(
+  workflowId: string
+): IPCResult<{ workflowId: string; name: string }> {
+  try {
+    // Get the original workflow
+    const originalResult = getWorkflowService(workflowId)
+    if (!originalResult.success) {
+      return originalResult as IPCResult<{ workflowId: string; name: string }>
+    }
+
+    const original = originalResult.data
+
+    // Create new workflow with "(copy)" suffix
+    const newName = `${original.name} (copy)`
+    const createResult = createWorkflow(newName)
+    const newWorkflowId = createResult.workflowId
+
+    // Generate new IDs for nodes and map old to new
+    const idMap = new Map<string, string>()
+    original.nodes.forEach((node) => {
+      idMap.set(node.id, createId())
+    })
+
+    // Transform nodes with new IDs
+    const newNodes = original.nodes.map((node) => ({
+      id: idMap.get(node.id)!,
+      workflowId: newWorkflowId,
+      type: node.type as string,
+      position: JSON.stringify(node.position),
+      data: JSON.stringify(node.data),
+    }))
+
+    // Transform edges with new IDs
+    const newEdges = original.edges.map((edge) => ({
+      id: createId(),
+      workflowId: newWorkflowId,
+      fromNodeId: idMap.get(edge.source) || edge.source,
+      toNodeId: idMap.get(edge.target) || edge.target,
+      fromOutput: edge.sourceHandle || '',
+      toInput: edge.targetHandle || '',
+    }))
+
+    // Save the duplicated workflow
+    updateWorkflow(newWorkflowId, newNodes, newEdges)
+
+    // Copy headless setting
+    updateWorkflowHeadless(newWorkflowId, original.headless)
+
+    return success({ workflowId: newWorkflowId, name: newName })
   } catch (err) {
     return errorFromException(err, IPCErrorCode.DATABASE_ERROR)
   }

@@ -4,6 +4,7 @@ import { edgesServiceType } from '../@types/workflows'
 import {
   createWorkflowService,
   deleteWorkflowService,
+  duplicateWorkflowService,
   getWorkflowService,
   getWorkflowsService,
   updateWorkflowHeadlessService,
@@ -35,4 +36,8 @@ ipcMain.handle(
   'workflows:updateHeadless',
   async (_, workflowId: string, headless: boolean) =>
     updateWorkflowHeadlessService(workflowId, headless)
+)
+
+ipcMain.handle('workflows:duplicate', async (_, workflowId: string) =>
+  duplicateWorkflowService(workflowId)
 )

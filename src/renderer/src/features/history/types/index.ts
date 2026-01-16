@@ -22,4 +22,5 @@ export interface NodeExecutionLog {
   duration: number | null
   context_snapshot: string | null
   error: string | null
+  error_code: string | null
 }
