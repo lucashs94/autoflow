@@ -86,7 +86,7 @@ export function Editor({ workflowId }: { workflowId: string }) {
         setIsImporting(false)
       }
     },
-    [workflowId, nodes, edges]
+    [workflowId, nodes, edges],
   )
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -117,17 +117,17 @@ export function Editor({ workflowId }: { workflowId: string }) {
   const onNodesChange = useCallback(
     (changes: NodeChange[]) =>
       setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
-    []
+    [],
   )
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) =>
       setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
-    []
+    [],
   )
   const onConnect = useCallback(
     (params: Connection) =>
       setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
-    []
+    [],
   )
 
   const isValidConnection = useCallback(
@@ -154,15 +154,16 @@ export function Editor({ workflowId }: { workflowId: string }) {
       // return !detectedCycle
       return true
     },
-    [nodes, edges]
+    [nodes, edges],
   )
 
   const onKeyDown = (
-    e: React.KeyboardEvent<HTMLDivElement> | KeyboardEvent
+    e: React.KeyboardEvent<HTMLDivElement> | KeyboardEvent,
   ) => {
     const isSave = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'
 
     if (!isSave) return
+    if (!hasChanges) return
 
     e.preventDefault()
     e.stopPropagation()
