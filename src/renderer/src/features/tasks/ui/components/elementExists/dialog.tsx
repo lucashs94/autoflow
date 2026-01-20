@@ -257,9 +257,9 @@ export const SettingsDialog = ({
                   form.setValue('retryAttempts', 2)
                 }
               }}
-              attempts={form.watch('retryAttempts')}
+              attempts={form.watch('retryAttempts') ?? 1}
               onAttemptsChange={(attempts) => form.setValue('retryAttempts', attempts)}
-              delaySeconds={form.watch('retryDelaySeconds')}
+              delaySeconds={form.watch('retryDelaySeconds') ?? 2}
               onDelayChange={(delay) => form.setValue('retryDelaySeconds', delay)}
             />
 

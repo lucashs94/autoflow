@@ -36,7 +36,7 @@ const formSchema = z.object({
   retryDelaySeconds: z.coerce.number().min(1).max(10).default(2),
 })
 
-export type FormValues = z.infer<typeof formSchema>
+export type FormValues = z.input<typeof formSchema>
 
 interface Props {
   nodeId: string
@@ -82,7 +82,7 @@ export const SettingsDialog = ({
     },
   })
 
-  const handleSubmit = (values: z.infer<typeof formSchema>) => {
+  const handleSubmit = (values: FormValues) => {
     onSubmit(values)
     onOpenChange(false)
   }
@@ -161,9 +161,9 @@ export const SettingsDialog = ({
                   form.setValue('retryAttempts', 2)
                 }
               }}
-              attempts={form.watch('retryAttempts')}
+              attempts={form.watch('retryAttempts') ?? 1}
               onAttemptsChange={(attempts) => form.setValue('retryAttempts', attempts)}
-              delaySeconds={form.watch('retryDelaySeconds')}
+              delaySeconds={form.watch('retryDelaySeconds') ?? 2}
               onDelayChange={(delay) => form.setValue('retryDelaySeconds', delay)}
             />
 
