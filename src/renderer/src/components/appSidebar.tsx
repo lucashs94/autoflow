@@ -4,6 +4,7 @@ import { FolderOpenIcon, HistoryIcon } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -12,6 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from './ui/sidebar'
+import { StatusIndicators } from './statusIndicators'
 
 const menuItems = [
   {
@@ -62,9 +64,7 @@ export function AppSidebar() {
               className="size-12 shrink-0 object-contain drop-shadow-[0_0_4px_#00ff7f] animate-pulse"
             />
 
-            <span
-              className="font-semibold text-sm text-white! group-data-[collapsible=icon]:hidden"
-            >
+            <span className="font-semibold text-sm text-white! group-data-[collapsible=icon]:hidden">
               Web Automations
             </span>
           </Link>
@@ -85,7 +85,7 @@ export function AppSidebar() {
                       className={cn(
                         'gap-x-4 h-10 px-4',
                         isActive(item.url) &&
-                          'bg-sidebar-primary! text-white! hover:text-white!'
+                          'bg-sidebar-primary! text-white! hover:text-white!',
                       )}
                     >
                       <Link to={item.url}>
@@ -100,6 +100,10 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
+
+      <SidebarFooter className="py-3">
+        <StatusIndicators />
+      </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>
