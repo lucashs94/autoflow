@@ -1,5 +1,6 @@
 import { electronAPI } from '@electron-toolkit/preload'
 import { contextBridge } from 'electron'
+import { chrome } from './chrome.preload'
 import { executions } from './executions.preload'
 import { history } from './history.preload'
 import { nodes } from './nodes.preload'
@@ -7,6 +8,7 @@ import { workflows } from './workflows.preload'
 
 // Custom APIs for renderer
 const api = {
+  chrome,
   workflows,
   nodes,
   executions,

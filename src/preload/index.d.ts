@@ -3,10 +3,29 @@ import type { Node as FlowNode } from '@xyflow/react'
 import type { IPCResult } from '../shared/@types/ipc-response'
 import type { WorkflowServiceReturnType } from '../main/@types/workflows'
 
+export type ChromeDownloadProgress = {
+  percent: number
+  downloadedBytes: number
+  totalBytes: number
+}
+
+export type ChromeStatus = {
+  available: boolean
+  source: 'system' | 'downloaded' | 'none'
+  browser: string | null
+  path: string | null
+}
+
 declare global {
   interface Window {
     electron: ElectronAPI
     api: {
+      chrome: {
+        getStatus: () => Promise<IPCResult<ChromeStatus>>
+        isAvailable: () => Promise<IPCResult<boolean>>
+        download: () => Promise<IPCResult<string>>
+        onDownloadProgress: (callback: (progress: ChromeDownloadProgress) => void) => () => void
+      }
       workflows: {
         getMany: () => Promise<IPCResult<WorkflowType[]>>
         getOne: (workflowId: string) => Promise<IPCResult<WorkflowServiceReturnType>>

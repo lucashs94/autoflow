@@ -9,6 +9,7 @@ out
 build
 out
 database
+chromium
 NEXT*.md
 .claude
 TODO*

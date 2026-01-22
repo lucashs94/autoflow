@@ -1,3 +1,4 @@
+import './chrome.ipc'
 import './executions.ipc'
 import './history.ipc'
 import './nodes.ipc'

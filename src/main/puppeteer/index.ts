@@ -1,4 +1,5 @@
-import Puppeteer, { Browser, Page } from 'puppeteer'
+import Puppeteer, { Browser, Page } from 'puppeteer-core'
+import { ensureChromeAvailable, type ProgressCallback } from './chromium'
 
 export class BrowserController {
   private static instance: BrowserController | null = null
@@ -29,13 +30,17 @@ export class BrowserController {
     return true
   }
 
-  async start(headless: boolean = false) {
+  async start(headless: boolean = false, onChromeDownloadProgress?: ProgressCallback) {
     this.shouldStop = false
 
+    // Get Chrome path, downloading if necessary
+    const executablePath = await ensureChromeAvailable(onChromeDownloadProgress)
+
     this.browser = await Puppeteer.launch({
+      executablePath,
       headless,
       defaultViewport: null,
-      args: ['--start-maximized'],
+      args: ['--start-maximized', '--no-sandbox', '--disable-setuid-sandbox'],
     })
 
     const pages = await this.browser.pages()
