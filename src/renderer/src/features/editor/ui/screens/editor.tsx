@@ -181,13 +181,13 @@ export function Editor({ workflowId }: { workflowId: string }) {
     return () => {
       window.removeEventListener('keydown', onKeyDown, { capture: true })
     }
-  }, [onKeyDown, saveWorkflow])
+  }, [onKeyDown])
 
   return (
     <div
       className="size-full bg-muted relative"
       tabIndex={0}
-      onKeyDown={onKeyDown}
+      // onKeyDown={onKeyDown}
       onDrop={handleFileDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
