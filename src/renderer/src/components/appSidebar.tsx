@@ -1,6 +1,7 @@
 import { cn } from '@renderer/lib/utils'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { FolderOpenIcon, HistoryIcon } from 'lucide-react'
+import logoImg from '../../public/logo.png'
 import {
   Sidebar,
   SidebarContent,
@@ -57,7 +58,7 @@ export function AppSidebar() {
             className="flex items-center gap-x-3 h-12 px-4 group-data-[collapsible=icon]:h-8  group-data-[collapsible=icon]:px-0 text-green-300 group-data-[collapsible=icon]:justify-center"
           >
             <img
-              src={'/logo.png'}
+              src={logoImg}
               alt="node"
               width={60}
               height={60}

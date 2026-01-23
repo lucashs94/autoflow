@@ -1,10 +1,11 @@
 import Database, {
   type Database as BetterSqlite3Database,
 } from 'better-sqlite3'
+import { app } from 'electron'
 import fs from 'fs'
 import path from 'path'
 
-const folderPath = path.join(process.cwd(), 'database')
+const folderPath = path.join(app.getPath('userData'), 'database')
 
 // Cria o arquivo se não existir
 if (!fs.existsSync(folderPath)) {

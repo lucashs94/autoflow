@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createRouter, RouterProvider } from '@tanstack/react-router'
+import { createHashHistory, createRouter, RouterProvider } from '@tanstack/react-router'
 import { Provider as JotaiProvider } from 'jotai'
 import { BadgeAlertIcon, BadgeCheckIcon, BadgeXIcon } from 'lucide-react'
 import { Toaster } from 'sonner'
@@ -8,8 +8,11 @@ import { routeTree } from './routeTree.gen'
 
 const queryClient = new QueryClient()
 
+// Use hash history for Electron file:// protocol compatibility
+const hashHistory = createHashHistory()
+
 // Create a new router instance
-const router = createRouter({ routeTree })
+const router = createRouter({ routeTree, history: hashHistory })
 
 // Register the router instance for type safety
 declare module '@tanstack/react-router' {

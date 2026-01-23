@@ -15,8 +15,8 @@ ipcMain.handle('execution:startBrowser', async (_, headless: boolean) =>
   startBrowserService(headless)
 )
 
-ipcMain.handle('execution:navigateUrl', async (_, url: string) =>
-  navigateUrlService(url)
+ipcMain.handle('execution:navigateUrl', async (_, url: string, headless?: boolean) =>
+  navigateUrlService(url, headless)
 )
 
 ipcMain.handle(

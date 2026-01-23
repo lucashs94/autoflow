@@ -1,5 +1,5 @@
-appId: com.electron.automacoes
-productName: automacoes
+appId: com.lucassilva.webautomations
+productName: Web Automations
 directories:
   buildResources: build
 files:
@@ -14,7 +14,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: automacoes
+  executableName: WebAutomations
   target:
     - target: nsis
       arch:
@@ -53,11 +53,8 @@ linux:
     - AppImage
     - snap
     - deb
-  maintainer: electronjs.org
+  maintainer: Lucas Silva
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
-publish:
-  provider: generic
-  url: https://example.com/auto-updates

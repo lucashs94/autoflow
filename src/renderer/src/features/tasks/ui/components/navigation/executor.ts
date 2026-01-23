@@ -39,8 +39,11 @@ export const navigationExecutor: NodeExecutor<ExecutorDataProps> = async ({
     const delayMs = (data.retryDelaySeconds ?? 2) * 1000
     let lastError: ExecutorError | null = null
 
+    // Get headless setting from context (set by executeWorkflow)
+    const headless = context.__headless as boolean | undefined
+
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const result = await window.api.executions.navigateUrl(resolvedUrl)
+      const result = await window.api.executions.navigateUrl(resolvedUrl, headless)
 
       if (isSuccess(result)) {
         publishStatus({

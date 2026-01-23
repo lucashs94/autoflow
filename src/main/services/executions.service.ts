@@ -22,11 +22,11 @@ export async function startBrowserService(
   }
 }
 
-export async function navigateUrlService(url: string): Promise<IPCResult<void>> {
+export async function navigateUrlService(url: string, headless?: boolean): Promise<IPCResult<void>> {
   try {
-    // Start browser if not already running (with default headless=false as fallback)
+    // Start browser if not already running
     if (!instance.isBrowserRunning()) {
-      await instance.start(false)
+      await instance.start(headless ?? false)
     }
     await instance.goToUrl(url)
     return success(undefined)

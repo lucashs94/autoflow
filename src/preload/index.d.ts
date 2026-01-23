@@ -46,7 +46,7 @@ declare global {
       }
       executions: {
         startBrowser: (headless: boolean) => Promise<IPCResult<void>>
-        navigateUrl: (url: string) => Promise<IPCResult<void>>
+        navigateUrl: (url: string, headless?: boolean) => Promise<IPCResult<void>>
         typeText: (selector: string, text: string, timeout?: number) => Promise<IPCResult<void>>
         clickElement: (selector: string, timeout?: number) => Promise<IPCResult<void>>
         waitForElement: (

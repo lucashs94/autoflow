@@ -8,6 +8,9 @@ import { ExecutorError, IPCErrorCode, isSuccess } from '@shared/@types/ipc-respo
 
 const MAX_NODE_EXECUTIONS = 1000
 
+/** Node types that are purely visual and don't participate in execution */
+const NON_EXECUTABLE_NODES: NodeType[] = [NodeType.STICKY_NOTE]
+
 export async function executeWorkflow(
   workflowId: string,
   signal?: AbortSignal
@@ -19,18 +22,6 @@ export async function executeWorkflow(
   }
 
   const workflow = result.data
-
-  // Start browser with workflow's headless setting
-  // headless: true means browser runs in background (no window)
-  // headless: false means browser window is visible (visual mode)
-  const startBrowserResult = await window.api.executions.startBrowser(
-    workflow.headless
-  )
-  if (!isSuccess(startBrowserResult)) {
-    throw new Error(
-      `Failed to start browser: ${startBrowserResult.error.message}`
-    )
-  }
 
   // Create execution history record
   const executionId = crypto.randomUUID()
@@ -50,8 +41,9 @@ export async function executeWorkflow(
     throw new Error(`Workflow must have an initial node!`)
   }
 
-  // Reset all nodes to initial status
+  // Reset all executable nodes to initial status (skip visual-only nodes like sticky notes)
   workflow.nodes.forEach((node) => {
+    if (NON_EXECUTABLE_NODES.includes(node.type as NodeType)) return
     publishStatus({
       nodeId: node.id,
       status: 'initial',
@@ -64,8 +56,10 @@ export async function executeWorkflow(
   const firstEdge = workflow.edges.find((e) => e.source === initialNode.id)
   let currentNodeId: string | null = firstEdge?.target ?? null
 
-  // Initialize context
-  let context: Record<string, unknown> = {}
+  // Initialize context with workflow settings
+  let context: Record<string, unknown> = {
+    __headless: workflow.headless,
+  }
 
   // Track executions per node (protection against infinite loops)
   const executionCount = new Map<string, number>()
@@ -100,6 +94,15 @@ export async function executeWorkflow(
       if (!node) {
         console.warn(`Node ${currentNodeId} not found, stopping execution`)
         break
+      }
+
+      // Skip non-executable nodes (e.g., sticky notes) - they're visual only
+      if (NON_EXECUTABLE_NODES.includes(node.type as NodeType)) {
+        console.warn(`Skipping non-executable node ${node.type}`)
+        // Find next node from outgoing edges and continue
+        const outgoingEdge = workflow.edges.find((e) => e.source === currentNodeId)
+        currentNodeId = outgoingEdge?.target ?? null
+        continue
       }
 
       // Protection against infinite loops

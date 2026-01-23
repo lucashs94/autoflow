@@ -1,10 +1,9 @@
 {
-  "name": "automacoes",
+  "name": "web-automations",
   "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "An app to execute web tasks automatically",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "Lucas Silva",
   "scripts": {
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",

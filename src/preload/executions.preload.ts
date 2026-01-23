@@ -3,8 +3,8 @@ import { ipcRenderer } from 'electron'
 export const executions = {
   startBrowser: (headless: boolean) =>
     ipcRenderer.invoke('execution:startBrowser', headless),
-  navigateUrl: (url: string) =>
-    ipcRenderer.invoke('execution:navigateUrl', url),
+  navigateUrl: (url: string, headless?: boolean) =>
+    ipcRenderer.invoke('execution:navigateUrl', url, headless),
   typeText: (selector: string, text: string, timeout?: number) =>
     ipcRenderer.invoke('execution:typeText', selector, text, timeout),
   clickElement: (selector: string, timeout?: number) =>
