@@ -1,4 +1,5 @@
 import { InitialNode } from '@renderer/components/nodes/initialNode'
+import { StickyNote } from '@renderer/components/nodes/stickyNote'
 import { TaskRegistry } from '@renderer/features/tasks/registries/taskRegistry'
 import { NodeType } from '@renderer/types/nodes'
 import { NodeTypes } from '@xyflow/react'
@@ -20,6 +21,7 @@ export const nodeComponents = {
   [NodeType.GET_TEXT]: TaskRegistry.GET_TEXT.node,
   [NodeType.ELEMENT_EXISTS]: TaskRegistry.ELEMENT_EXISTS.node,
   [NodeType.DRAG_AND_DROP]: TaskRegistry.DRAG_AND_DROP.node,
+  [NodeType.STICKY_NOTE]: StickyNote,
 } as const satisfies nodeComponentsTypes
 
 export type RegisteredNodeTypes = keyof typeof nodeComponents

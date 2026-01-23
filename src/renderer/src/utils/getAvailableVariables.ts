@@ -7,6 +7,16 @@ export interface VariableInfo {
   properties: string[]
 }
 
+/** Node types that are purely visual and don't participate in execution */
+const NON_EXECUTABLE_NODES: NodeType[] = [NodeType.STICKY_NOTE]
+
+/**
+ * Check if a node type is executable (participates in workflow execution)
+ */
+function isExecutableNode(nodeType: NodeType): boolean {
+  return !NON_EXECUTABLE_NODES.includes(nodeType)
+}
+
 /**
  * Get properties available for a node type
  */
@@ -44,6 +54,9 @@ export function getAvailableVariablesWithInfo(
   const previousNodes = getNodesBeforeCurrent(currentNodeId, nodes, edges)
 
   previousNodes.forEach((node) => {
+    // Skip non-executable nodes (e.g., sticky notes)
+    if (!isExecutableNode(node.type as NodeType)) return
+
     const nodeName = (node.data as any)?.name
     if (nodeName && nodeName !== 'Initial' && node.type !== NodeType.INITIAL) {
       variablesMap.set(nodeName, {
@@ -102,6 +115,9 @@ export function getAvailableVariables(
   const previousNodes = getNodesBeforeCurrent(currentNodeId, nodes, edges)
 
   previousNodes.forEach((node) => {
+    // Skip non-executable nodes (e.g., sticky notes)
+    if (!isExecutableNode(node.type as NodeType)) return
+
     // Add node name as the primary variable (this is what users reference)
     const nodeName = (node.data as any)?.name
     if (nodeName && nodeName !== 'Initial' && node.type !== NodeType.INITIAL) {

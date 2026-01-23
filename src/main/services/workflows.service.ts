@@ -43,11 +43,39 @@ export function getWorkflowService(
     }
 
     // Parse JSON strings to objects and transform to ReactFlow types
-    const parsedNodes = nodes.map((node) => ({
-      ...node,
-      position: JSON.parse(node.position as string),
-      data: JSON.parse(node.data as string),
-    })) as FlowNode[]
+    const parsedNodes = nodes.map((node) => {
+      const parsedData = JSON.parse(node.data as string)
+
+      // Only sticky notes need style, width, height, and zIndex restoration
+      if (node.type === 'STICKY_NOTE') {
+        const { __style, __zIndex, __width, __height, ...data } = parsedData
+
+        // Build style object with dimensions
+        const style = {
+          ...(__style || {}),
+          ...(__width !== undefined && { width: __width }),
+          ...(__height !== undefined && { height: __height }),
+        }
+
+        return {
+          id: node.id,
+          type: node.type,
+          position: JSON.parse(node.position as string),
+          data,
+          style: Object.keys(style).length > 0 ? style : undefined,
+          ...(__zIndex !== undefined && { zIndex: __zIndex }),
+          ...(__width !== undefined && { width: __width }),
+          ...(__height !== undefined && { height: __height }),
+        }
+      }
+
+      return {
+        id: node.id,
+        type: node.type,
+        position: JSON.parse(node.position as string),
+        data: parsedData,
+      }
+    }) as FlowNode[]
 
     const parsedEdges = oldEdges.map((edge) => ({
       id: edge.id,
@@ -133,13 +161,32 @@ export function updateWorkflowService(
   edges: edgesServiceType[]
 ): IPCResult<void> {
   try {
-    const nodeTypes = nodes.map((node) => ({
-      id: node.id,
-      workflowId,
-      type: node.type as string,
-      position: JSON.stringify(node.position || '{}'),
-      data: JSON.stringify(node.data || ''),
-    }))
+    const nodeTypes = nodes.map((node) => {
+      // Only sticky notes need style, width, height, and zIndex persistence
+      const isStickyNote = node.type === 'STICKY_NOTE'
+
+      // Get dimensions from multiple possible sources (style, direct props, or measured)
+      const width = node.width ?? node.measured?.width ?? node.style?.width
+      const height = node.height ?? node.measured?.height ?? node.style?.height
+
+      const data = isStickyNote
+        ? {
+            ...node.data,
+            ...(node.style && { __style: node.style }),
+            ...(node.zIndex !== undefined && { __zIndex: node.zIndex }),
+            ...(width !== undefined && { __width: width }),
+            ...(height !== undefined && { __height: height }),
+          }
+        : node.data
+
+      return {
+        id: node.id,
+        workflowId,
+        type: node.type as string,
+        position: JSON.stringify(node.position || '{}'),
+        data: JSON.stringify(data || ''),
+      }
+    })
 
     const edgeTypes = edges.map((edge) => ({
       id: edge.id,
@@ -180,14 +227,32 @@ export function duplicateWorkflowService(
       idMap.set(node.id, createId())
     })
 
-    // Transform nodes with new IDs
-    const newNodes = original.nodes.map((node) => ({
-      id: idMap.get(node.id)!,
-      workflowId: newWorkflowId,
-      type: node.type as string,
-      position: JSON.stringify(node.position),
-      data: JSON.stringify(node.data),
-    }))
+    // Transform nodes with new IDs (only sticky notes need style/zIndex/width/height)
+    const newNodes = original.nodes.map((node) => {
+      const isStickyNote = node.type === 'STICKY_NOTE'
+
+      // Get dimensions from multiple possible sources
+      const width = node.width ?? node.measured?.width ?? node.style?.width
+      const height = node.height ?? node.measured?.height ?? node.style?.height
+
+      const data = isStickyNote
+        ? {
+            ...node.data,
+            ...(node.style && { __style: node.style }),
+            ...(node.zIndex !== undefined && { __zIndex: node.zIndex }),
+            ...(width !== undefined && { __width: width }),
+            ...(height !== undefined && { __height: height }),
+          }
+        : node.data
+
+      return {
+        id: idMap.get(node.id)!,
+        workflowId: newWorkflowId,
+        type: node.type as string,
+        position: JSON.stringify(node.position),
+        data: JSON.stringify(data),
+      }
+    })
 
     // Transform edges with new IDs
     const newEdges = original.edges.map((edge) => ({

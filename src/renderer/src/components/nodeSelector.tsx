@@ -114,6 +114,7 @@ const logicNodes: NodeTypeOption[] = [
   },
 ]
 
+
 interface NodeSelectorProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -372,7 +373,7 @@ export function NodeSelector({
               return (
                 <div
                   key={nodeType.type}
-                  className="w-full justify-start h-auto py-2 px-4 rounded-none 
+                  className="w-full justify-start h-auto py-2 px-4 rounded-none
                 cursor-pointer border-l-2 border-transparent hover:border-l-primary mt-2"
                   onClick={() => handleNodeSelect(nodeType)}
                 >
@@ -401,6 +402,7 @@ export function NodeSelector({
               )
             })}
         </div>
+
       </SheetContent>
     </Sheet>
   )

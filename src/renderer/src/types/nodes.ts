@@ -11,6 +11,7 @@ export const NodeType = {
   GET_TEXT: 'GET_TEXT',
   ELEMENT_EXISTS: 'ELEMENT_EXISTS',
   DRAG_AND_DROP: 'DRAG_AND_DROP',
+  STICKY_NOTE: 'STICKY_NOTE',
 } as const
 
 export type NodeType = (typeof NodeType)[keyof typeof NodeType]

@@ -34,6 +34,7 @@ import { Loader2Icon, UploadIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { getSnapshot, verifyHasChanges } from '../../utils/hasChanges'
 import { AddNodeBtn } from '../components/addNodeBtn'
+import { AddStickyNoteBtn } from '../components/addStickyNoteBtn'
 import { DeleteWorkflowDialog } from '../components/deleteWorkflowDialog'
 import { EditorHeaderName } from '../components/editorHeaderName'
 import { ExecuteWorkflowBtn } from '../components/executeWorkflowBtn'
@@ -227,6 +228,7 @@ export function Editor({ workflowId }: { workflowId: string }) {
         selectionOnDrag
         selectionMode={SelectionMode.Partial}
         selectNodesOnDrag={false}
+        elevateNodesOnSelect={false}
         fitView
         snapToGrid
         snapGrid={[10, 10]}
@@ -270,8 +272,9 @@ export function Editor({ workflowId }: { workflowId: string }) {
             />
           </div>
 
-          <div>
+          <div className="flex gap-4 flex-col">
             <AddNodeBtn />
+            <AddStickyNoteBtn />
           </div>
         </Panel>
       </ReactFlow>
