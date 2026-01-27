@@ -1,7 +1,7 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow, shell } from 'electron'
 import path, { join } from 'path'
-import icon from '../../resources/icon.png?asset'
+import icon from './assets/icon.png?asset'
 import './ipc'
 
 app.setName('Web Automation')
