@@ -1,6 +1,6 @@
 {
   "name": "web-automations",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An app to execute web tasks automatically",
   "main": "./out/main/index.js",
   "author": "Lucas Silva",
