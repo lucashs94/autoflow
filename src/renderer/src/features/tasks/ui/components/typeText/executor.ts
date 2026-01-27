@@ -25,8 +25,14 @@ export const typeTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
   context,
   data,
   nodeId,
+  signal,
   outgoingEdges,
 }) => {
+  // Check if already aborted before starting
+  if (signal?.aborted) {
+    throw new Error('Type text cancelled')
+  }
+
   publishStatus({
     nodeId,
     status: 'loading',
@@ -81,7 +87,17 @@ export const typeTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
     let lastError: ExecutorError | null = null
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      // Check if aborted before each attempt
+      if (signal?.aborted) {
+        throw new Error('Type text cancelled')
+      }
+
       const result = await window.api.executions.typeText(finalSelector, resolvedText, data.timeout)
+
+      // Check if aborted after operation completes
+      if (signal?.aborted) {
+        throw new Error('Type text cancelled')
+      }
 
       if (isSuccess(result)) {
         publishStatus({
@@ -96,7 +112,17 @@ export const typeTextExecutor: NodeExecutor<ExecutorDataProps> = async ({
 
       if (attempt < maxAttempts) {
         console.log(`Type text failed, retrying (${attempt}/${maxAttempts})...`)
-        await new Promise((resolve) => setTimeout(resolve, delayMs))
+        // Cancellable delay
+        await new Promise<void>((resolve, reject) => {
+          const timeoutId = setTimeout(resolve, delayMs)
+          if (signal) {
+            const onAbort = () => {
+              clearTimeout(timeoutId)
+              reject(new Error('Type text cancelled'))
+            }
+            signal.addEventListener('abort', onAbort, { once: true })
+          }
+        })
       }
     }
 

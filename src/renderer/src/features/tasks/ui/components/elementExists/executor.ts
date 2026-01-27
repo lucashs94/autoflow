@@ -24,8 +24,14 @@ export const elementExistsExecutor: NodeExecutor<ExecutorDataProps> = async ({
   context,
   data,
   nodeId,
+  signal,
   outgoingEdges,
 }) => {
+  // Check if already aborted before starting
+  if (signal?.aborted) {
+    throw new Error('Element exists check cancelled')
+  }
+
   publishStatus({
     nodeId,
     status: 'loading',
@@ -80,11 +86,21 @@ export const elementExistsExecutor: NodeExecutor<ExecutorDataProps> = async ({
     let apiCallSucceeded = false
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      // Check if aborted before each attempt
+      if (signal?.aborted) {
+        throw new Error('Element exists check cancelled')
+      }
+
       // Call the elementExists API - this returns boolean, not throws
       const result = await window.api.executions.elementExists(
         finalSelector,
         data.timeout
       )
+
+      // Check if aborted after operation completes
+      if (signal?.aborted) {
+        throw new Error('Element exists check cancelled')
+      }
 
       if (result.success) {
         exists = result.data?.exists === true
@@ -94,7 +110,17 @@ export const elementExistsExecutor: NodeExecutor<ExecutorDataProps> = async ({
 
       if (attempt < maxAttempts) {
         console.log(`Element exists check failed, retrying (${attempt}/${maxAttempts})...`)
-        await new Promise((resolve) => setTimeout(resolve, delayMs))
+        // Cancellable delay
+        await new Promise<void>((resolve, reject) => {
+          const timeoutId = setTimeout(resolve, delayMs)
+          if (signal) {
+            const onAbort = () => {
+              clearTimeout(timeoutId)
+              reject(new Error('Element exists check cancelled'))
+            }
+            signal.addEventListener('abort', onAbort, { once: true })
+          }
+        })
       }
     }
 
