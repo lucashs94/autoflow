@@ -52,7 +52,16 @@ function useChromeStatus() {
 
     // Re-check every 30 seconds
     const interval = setInterval(checkStatus, 30000)
-    return () => clearInterval(interval)
+
+    // Listen for status changes (e.g., after Chrome download)
+    const cleanup = window.api.chrome.onStatusChanged(() => {
+      checkStatus()
+    })
+
+    return () => {
+      clearInterval(interval)
+      cleanup()
+    }
   }, [])
 
   return { status, isLoading }
