@@ -61,6 +61,7 @@ export const StickyNote = memo(
     const handleDoubleClick = useCallback(() => {
       setIsEditing(true)
       setTimeout(() => textareaRef.current?.focus(), 0)
+      textareaRef.current?.select()
     }, [])
 
     const handleTextareaBlur = useCallback(() => {
@@ -93,12 +94,11 @@ export const StickyNote = memo(
             'w-full h-full rounded border flex flex-col',
             !isEditing && 'cursor-grab active:cursor-grabbing',
           )}
-          onDoubleClick={!isEditing ? handleDoubleClick : undefined}
         >
           {/* Toolbar inside the node - only when selected */}
           {selected && (
             <div
-              className="relative z-[100] flex justify-start items-center gap-1 px-1 py-0.5 border-b nodrag nopan"
+              className="relative flex justify-start items-center gap-1 px-1 py-0.5 border-b nodrag nopan"
               style={{ borderColor: borderColor, pointerEvents: 'all' }}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
@@ -154,13 +154,13 @@ export const StickyNote = memo(
             onBlur={handleTextareaBlur}
             placeholder="Double-click to edit..."
             readOnly={!isEditing}
+            onDoubleClick={!isEditing ? handleDoubleClick : undefined}
             className={cn(
               'flex-1 w-full p-1.5 resize-none',
               'bg-transparent border-none outline-none',
               'text-[8px] text-white/70 placeholder:text-white/40 leading-relaxed',
-              isEditing
-                ? 'nodrag nopan cursor-text'
-                : 'pointer-events-none cursor-grab',
+              'pointer-events-auto',
+              isEditing ? 'nodrag nopan cursor-text' : 'cursor-grab',
             )}
           />
         </div>
