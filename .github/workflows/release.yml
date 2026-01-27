@@ -14,7 +14,7 @@ jobs:
             platform: mac
             arch: arm64
             build_script: build:mac:arm64
-          - os: macos-13
+          - os: macos-15-intel
             platform: mac
             arch: x64
             build_script: build:mac:x64
@@ -49,9 +49,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Install native dependencies
-        run: npm run postinstall
 
       - name: Build
         run: npm run ${{ matrix.build_script }}
@@ -109,7 +106,12 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: |
+            dist/*.dmg
+            dist/*mac.zip
+            dist/*.exe
+            dist/*.AppImage
+            dist/*.deb
           draft: false
           prerelease: false
           generate_release_notes: true
