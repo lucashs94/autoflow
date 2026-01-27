@@ -41,6 +41,13 @@ ipcMain.handle('chrome:download', async (event): Promise<IPCResult<string>> => {
       }
     })
 
+    // Notify all windows that Chrome status has changed
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('chrome:statusChanged')
+      }
+    })
+
     return success(chromePath)
   } catch (error) {
     return errorFromException(error, IPCErrorCode.UNKNOWN_ERROR)
