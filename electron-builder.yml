@@ -43,7 +43,6 @@ asarUnpack:
 # no auto-updates 
 publish: null
 generateUpdatesFilesForAllChannels: false
-differentialPackage: false
 
 win:
   executableName: WebAutomations
