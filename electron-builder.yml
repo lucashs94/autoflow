@@ -1,7 +1,7 @@
 appId: com.lucassilva.webautomations
 productName: Web Automations
 directories:
-  buildResources: build
+  buildResources: resources
 compression: maximum
 files:
   - '!**/.vscode/*'
@@ -38,7 +38,6 @@ files:
   - '!**/node_modules/**/example'
   - '!**/node_modules/**/examples'
 asarUnpack:
-  - resources/**
   - '**/*.node'
 win:
   executableName: WebAutomations
@@ -59,7 +58,7 @@ nsis:
 portable:
   artifactName: ${name}-${version}-portable.${ext}
 mac:
-  entitlementsInherit: build/entitlements.mac.plist
+  entitlementsInherit: resources/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
