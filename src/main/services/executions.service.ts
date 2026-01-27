@@ -12,10 +12,8 @@ export async function startBrowserService(
   headless: boolean = false
 ): Promise<IPCResult<void>> {
   try {
-    // Only start if not already running
-    if (!instance.isBrowserRunning()) {
-      await instance.start(headless)
-    }
+    // Always call start - it handles checking if browser/page are valid
+    await instance.start(headless)
     return success(undefined)
   } catch (error) {
     return errorFromException(error, IPCErrorCode.NAVIGATION_ERROR)
@@ -24,10 +22,8 @@ export async function startBrowserService(
 
 export async function navigateUrlService(url: string, headless?: boolean): Promise<IPCResult<void>> {
   try {
-    // Start browser if not already running
-    if (!instance.isBrowserRunning()) {
-      await instance.start(headless ?? false)
-    }
+    // Always call start - it handles checking if browser/page are valid
+    await instance.start(headless ?? false)
     await instance.goToUrl(url)
     return success(undefined)
   } catch (error) {

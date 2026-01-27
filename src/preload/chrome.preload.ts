@@ -26,4 +26,14 @@ export const chrome = {
       ipcRenderer.removeListener('chrome:downloadProgress', handler)
     }
   },
+  onStatusChanged: (callback: () => void) => {
+    const handler = () => {
+      callback()
+    }
+    ipcRenderer.on('chrome:statusChanged', handler)
+    // Return cleanup function
+    return () => {
+      ipcRenderer.removeListener('chrome:statusChanged', handler)
+    }
+  },
 }

@@ -1,5 +1,5 @@
 import { app } from 'electron'
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { install, Browser, detectBrowserPlatform, resolveBuildId } from '@puppeteer/browsers'
 
@@ -13,48 +13,22 @@ import { install, Browser, detectBrowserPlatform, resolveBuildId } from '@puppet
  * This keeps the app lightweight while ensuring Chrome is always available.
  */
 
-// Known Chrome/Chromium-based browser installation paths by platform
+// Known Google Chrome installation paths by platform (only Chrome is supported)
 const SYSTEM_CHROME_PATHS = {
   darwin: [
-    // Google Chrome
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
     `${process.env.HOME}/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`,
-    // Arc Browser (Chromium-based)
-    '/Applications/Arc.app/Contents/MacOS/Arc',
-    `${process.env.HOME}/Applications/Arc.app/Contents/MacOS/Arc`,
-    // Brave Browser
-    '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
-    `${process.env.HOME}/Applications/Brave Browser.app/Contents/MacOS/Brave Browser`,
-    // Microsoft Edge
-    '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
-    `${process.env.HOME}/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge`,
-    // Chromium
-    '/Applications/Chromium.app/Contents/MacOS/Chromium',
-    `${process.env.HOME}/Applications/Chromium.app/Contents/MacOS/Chromium`,
   ],
   win32: [
-    // Google Chrome
     'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
     `${process.env.LOCALAPPDATA}\\Google\\Chrome\\Application\\chrome.exe`,
     `${process.env.PROGRAMFILES}\\Google\\Chrome\\Application\\chrome.exe`,
     `${process.env['PROGRAMFILES(X86)']}\\Google\\Chrome\\Application\\chrome.exe`,
-    // Microsoft Edge
-    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-    `${process.env.LOCALAPPDATA}\\Microsoft\\Edge\\Application\\msedge.exe`,
-    // Brave
-    `${process.env.LOCALAPPDATA}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
-    'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe',
   ],
   linux: [
     '/usr/bin/google-chrome',
     '/usr/bin/google-chrome-stable',
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
-    '/snap/bin/chromium',
-    '/usr/bin/brave-browser',
-    '/usr/bin/microsoft-edge',
   ],
 }
 
@@ -66,69 +40,125 @@ export function getUserDataPath(): string {
 }
 
 /**
- * Get the path to downloaded Chrome executable in user data folder
+ * Get path to the config file that stores the downloaded Chrome path
  */
-function getDownloadedChromePath(): string | null {
+function getChromeConfigPath(): string {
+  return join(getUserDataPath(), 'chrome-path.json')
+}
+
+/**
+ * Save the downloaded Chrome executable path to config
+ */
+function saveChromePath(executablePath: string): void {
+  const configPath = getChromeConfigPath()
   const browserDir = getUserDataPath()
 
   if (!existsSync(browserDir)) {
+    mkdirSync(browserDir, { recursive: true })
+  }
+
+  writeFileSync(configPath, JSON.stringify({ executablePath }), 'utf-8')
+}
+
+/**
+ * Discover Chrome executable in the browser folder (fallback if config doesn't exist)
+ */
+function discoverDownloadedChrome(): string | null {
+  const browserDir = getUserDataPath()
+  const chromeDir = join(browserDir, 'chrome')
+
+  if (!existsSync(chromeDir)) {
     return null
   }
 
-  let executablePath: string
+  try {
+    const { readdirSync } = require('fs')
+    const platforms = readdirSync(chromeDir)
 
-  switch (process.platform) {
-    case 'darwin':
-      if (process.arch === 'arm64') {
-        executablePath = join(
-          browserDir,
-          'chrome',
-          'mac_arm-stable',
-          'chrome-mac-arm64',
-          'Google Chrome for Testing.app',
-          'Contents',
-          'MacOS',
-          'Google Chrome for Testing',
-        )
-      } else {
-        executablePath = join(
-          browserDir,
-          'chrome',
-          'mac-stable',
-          'chrome-mac-x64',
-          'Google Chrome for Testing.app',
-          'Contents',
-          'MacOS',
-          'Google Chrome for Testing',
-        )
+    for (const platform of platforms) {
+      let executablePath: string | null = null
+
+      if (process.platform === 'darwin') {
+        // macOS: chrome/mac_arm-{version}/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing
+        const platformDir = join(chromeDir, platform)
+        const archDirs = readdirSync(platformDir)
+
+        for (const archDir of archDirs) {
+          const appPath = join(
+            platformDir,
+            archDir,
+            'Google Chrome for Testing.app',
+            'Contents',
+            'MacOS',
+            'Google Chrome for Testing'
+          )
+          if (existsSync(appPath)) {
+            executablePath = appPath
+            break
+          }
+        }
+      } else if (process.platform === 'win32') {
+        // Windows: chrome/win64-{version}/chrome-win64/chrome.exe
+        const platformDir = join(chromeDir, platform)
+        const archDirs = readdirSync(platformDir)
+
+        for (const archDir of archDirs) {
+          const exePath = join(platformDir, archDir, 'chrome.exe')
+          if (existsSync(exePath)) {
+            executablePath = exePath
+            break
+          }
+        }
+      } else if (process.platform === 'linux') {
+        // Linux: chrome/linux-{version}/chrome-linux64/chrome
+        const platformDir = join(chromeDir, platform)
+        const archDirs = readdirSync(platformDir)
+
+        for (const archDir of archDirs) {
+          const exePath = join(platformDir, archDir, 'chrome')
+          if (existsSync(exePath)) {
+            executablePath = exePath
+            break
+          }
+        }
       }
-      break
 
-    case 'win32':
-      executablePath = join(
-        browserDir,
-        'chrome',
-        'win64-stable',
-        'chrome-win64',
-        'chrome.exe',
-      )
-      break
-
-    case 'linux':
-      executablePath = join(
-        browserDir,
-        'chrome',
-        'linux-stable',
-        'chrome-linux64',
-        'chrome',
-      )
-      break
-
-    default:
-      return null
+      if (executablePath) {
+        // Save for future use
+        saveChromePath(executablePath)
+        return executablePath
+      }
+    }
+  } catch {
+    // Ignore discovery errors
   }
 
-  return existsSync(executablePath) ? executablePath : null
+  return null
+}
+
+/**
+ * Get the path to downloaded Chrome executable from saved config
+ */
+function getDownloadedChromePath(): string | null {
+  const configPath = getChromeConfigPath()
+
+  // First try to read from saved config
+  if (existsSync(configPath)) {
+    try {
+      const config = JSON.parse(readFileSync(configPath, 'utf-8'))
+      const executablePath = config.executablePath
+
+      // Verify the executable still exists
+      if (executablePath && existsSync(executablePath)) {
+        return executablePath
+      }
+    } catch {
+      // Ignore config read errors
+    }
+  }
+
+  // Fallback: discover Chrome in the browser folder
+  return discoverDownloadedChrome()
 }
 
 /**
@@ -235,6 +265,9 @@ export async function downloadChrome(onProgress?: ProgressCallback): Promise<str
     throw new Error(`Chrome installation failed: executable not found at ${installedBrowser.executablePath}`)
   }
 
+  // Save the executable path for future reference
+  saveChromePath(installedBrowser.executablePath)
+
   return installedBrowser.executablePath
 }
 
@@ -264,38 +297,34 @@ export interface ChromeStatus {
   path: string | null
 }
 
-function getBrowserNameFromPath(path: string): string {
-  const lowerPath = path.toLowerCase()
-  if (lowerPath.includes('arc')) return 'Arc'
-  if (lowerPath.includes('brave')) return 'Brave'
-  if (lowerPath.includes('edge') || lowerPath.includes('msedge')) return 'Edge'
-  if (lowerPath.includes('chromium')) return 'Chromium'
-  if (lowerPath.includes('chrome')) return 'Chrome'
-  return 'Browser'
+function getBrowserNameFromPath(_path: string): string {
+  return 'Chrome'
 }
 
 export function getChromeStatus(): ChromeStatus {
   const systemPath = getSystemChromePath()
+
   if (systemPath) {
     return {
       available: true,
-      source: 'system',
+      source: 'system' as const,
       browser: getBrowserNameFromPath(systemPath),
       path: systemPath,
     }
   }
 
   const downloadedPath = getDownloadedChromePath()
+
   if (downloadedPath) {
     return {
       available: true,
-      source: 'downloaded',
+      source: 'downloaded' as const,
       browser: 'Chrome',
       path: downloadedPath,
     }
   }
 
-  return { available: false, source: 'none', browser: null, path: null }
+  return { available: false, source: 'none' as const, browser: null, path: null }
 }
 
 // Legacy exports for backwards compatibility

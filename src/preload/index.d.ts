@@ -25,6 +25,7 @@ declare global {
         isAvailable: () => Promise<IPCResult<boolean>>
         download: () => Promise<IPCResult<string>>
         onDownloadProgress: (callback: (progress: ChromeDownloadProgress) => void) => () => void
+        onStatusChanged: (callback: () => void) => () => void
       }
       workflows: {
         getMany: () => Promise<IPCResult<WorkflowType[]>>
