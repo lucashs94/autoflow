@@ -2,17 +2,44 @@ appId: com.lucassilva.webautomations
 productName: Web Automations
 directories:
   buildResources: build
+compression: maximum
 files:
   - '!**/.vscode/*'
+  - '!**/.claude/*'
   - '!src/*'
   - '!scripts/*'
   - '!chromium/*'
+  - '!docs/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  # Exclude unnecessary node_modules files
+  - '!**/node_modules/**/*.md'
+  - '!**/node_modules/**/*.ts'
+  - '!**/node_modules/**/*.map'
+  - '!**/node_modules/**/*.d.ts'
+  - '!**/node_modules/**/LICENSE*'
+  - '!**/node_modules/**/CHANGELOG*'
+  - '!**/node_modules/**/README*'
+  - '!**/node_modules/**/.github'
+  - '!**/node_modules/**/.bin'
+  - '!**/node_modules/**/.eslintrc*'
+  - '!**/node_modules/**/.prettierrc*'
+  - '!**/node_modules/**/.npmignore'
+  - '!**/node_modules/**/.gitignore'
+  - '!**/node_modules/**/tsconfig.json'
+  - '!**/node_modules/**/Makefile'
+  - '!**/node_modules/**/binding.gyp'
+  - '!**/node_modules/**/docs'
+  - '!**/node_modules/**/test'
+  - '!**/node_modules/**/tests'
+  - '!**/node_modules/**/__tests__'
+  - '!**/node_modules/**/example'
+  - '!**/node_modules/**/examples'
 asarUnpack:
   - resources/**
+  - '**/*.node'
 win:
   executableName: WebAutomations
   target:
@@ -32,13 +59,6 @@ nsis:
 portable:
   artifactName: ${name}-${version}-portable.${ext}
 mac:
-  target:
-    - target: dmg
-      arch:
-        - universal
-    - target: zip
-      arch:
-        - universal
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
@@ -47,14 +67,12 @@ mac:
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
 dmg:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ${name}-${version}-${arch}.${ext}
 linux:
   target:
     - AppImage
-    - snap
     - deb
   maintainer: Lucas Silva
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}
-npmRebuild: false
