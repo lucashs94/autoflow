@@ -12,13 +12,20 @@ jobs:
         include:
           - os: macos-latest
             platform: mac
-            arch: universal
+            arch: arm64
+            build_script: build:mac:arm64
+          - os: macos-13
+            platform: mac
+            arch: x64
+            build_script: build:mac:x64
           - os: windows-latest
             platform: win
             arch: x64
+            build_script: build:win
           - os: ubuntu-latest
             platform: linux
             arch: x64
+            build_script: build:linux
 
     runs-on: ${{ matrix.os }}
 
@@ -43,29 +50,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install native dependencies (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Install native dependencies
         run: npm run postinstall
 
-      - name: Install native dependencies (macOS/Linux)
-        if: matrix.os != 'windows-latest'
-        run: npm run postinstall
-
-      - name: Build for macOS
-        if: matrix.platform == 'mac'
-        run: npm run build:mac
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build for Windows
-        if: matrix.platform == 'win'
-        run: npm run build:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build for Linux
-        if: matrix.platform == 'linux'
-        run: npm run build:linux
+      - name: Build
+        run: npm run ${{ matrix.build_script }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -73,7 +62,7 @@ jobs:
         if: matrix.platform == 'mac'
         uses: actions/upload-artifact@v4
         with:
-          name: release-mac
+          name: release-mac-${{ matrix.arch }}
           path: |
             dist/*.dmg
             dist/*.zip
@@ -96,7 +85,6 @@ jobs:
           path: |
             dist/*.AppImage
             dist/*.deb
-            dist/*.snap
           retention-days: 5
 
   release:
