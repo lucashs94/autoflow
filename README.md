@@ -1,6 +1,6 @@
-# Node-Based Web Automations
+# Autoflow
 
-Aplicação desktop para criação e execução de automações web através de um editor visual node-based. Construída com Electron e Puppeteer.
+A desktop application for creating and running web automations through a visual node-based editor. Built with Electron and Puppeteer.
 
 ## Tech Stack
 
@@ -10,59 +10,54 @@ Aplicação desktop para criação e execução de automações web através de 
 
 **Backend (Main Process):** Puppeteer Core, Better SQLite3, Parcel Watcher
 
-**Build & Release:** electron-builder, GitHub Actions (CI/CD de releases)
+**Build & Release:** electron-builder, GitHub Actions (release CI/CD)
 
-## Funcionalidades
+## Features
 
-- Editor visual drag-and-drop de workflows com React Flow
-- Criação de nós customizados para ações de automação web (clique, navegação, extração de dados, etc.)
-- Execução de workflows via Puppeteer com Chromium embarcado
-- Histórico de execuções persistido em SQLite local
-- Gerenciamento de workflows e nós reutilizáveis
-- IPC tipado entre processo main e renderer
-- Build multiplataforma (macOS, Windows, Linux) via electron-builder
-- CI/CD com GitHub Actions para releases automáticos
+- Visual drag-and-drop workflow editor with React Flow
+- Custom nodes for web automation actions (click, navigation, data extraction, etc.)
+- Workflow execution via Puppeteer with embedded Chromium
+- Execution history persisted in local SQLite
+- Workflow and reusable node management
+- Typed IPC between main and renderer processes
+- Cross-platform builds (macOS, Windows, Linux) via electron-builder
+- CI/CD with GitHub Actions for automated releases
 
-## Arquitetura
+## Architecture
 
 ```
 src/
-  main/                     # Processo principal Electron
-    db/                     # Camada de dados SQLite (workflows, nodes, history)
-    ipc/                    # Handlers IPC (chrome, executions, workflows, nodes, history)
-    puppeteer/              # Gerenciamento do Chromium e execução de automações
-    services/               # Regras de negócio (executions, workflows, nodes, history)
+  main/                     # Electron main process
+    db/                     # SQLite data layer (workflows, nodes, history)
+    ipc/                    # IPC handlers (chrome, executions, workflows, nodes, history)
+    puppeteer/              # Chromium management and automation execution
+    services/               # Business logic (executions, workflows, nodes, history)
 
-  preload/                  # Bridge seguro entre main e renderer (API exposta)
+  preload/                  # Secure bridge between main and renderer (exposed API)
 
-  renderer/                 # Interface React
+  renderer/                 # React interface
     components/
-      edges/                # Edges customizados do React Flow
-      nodes/                # Nós de execução customizados
+      edges/                # Custom React Flow edges
+      nodes/                # Custom execution nodes
     hooks/                  # Custom hooks (queries, mutations)
-    pages/                  # Páginas da aplicação
-    stores/                 # Estado global (Jotai)
+    pages/                  # Application pages
+    stores/                 # Global state (Jotai)
 ```
 
-## Como Rodar
+## Getting Started
 
-### Pré-requisitos
+### Prerequisites
 - Node.js 18+
-- npm
 
 ### Setup
 
 ```bash
 npm install
-npm run dev                 # inicia em modo desenvolvimento (Electron + Vite)
+npm run dev                 # starts in development mode (Electron + Vite)
 ```
 
 ### Build
 
 ```bash
-npm run build               # gera executável para a plataforma atual
+npm run build               # generates executable for the current platform
 ```
-
-## Autor
-
-**Lucas Silva** - [LinkedIn](https://www.linkedin.com/in/lucashs94/) | [GitHub](https://github.com/lucashs94) | h7.lucas@gmail.com
