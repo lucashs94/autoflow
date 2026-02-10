@@ -1,4 +1,4 @@
-import { db } from './index'
+import { getDb } from './index'
 
 // Types
 export interface ExecutionHistory {
@@ -66,7 +66,7 @@ export interface LogNodeExecutionParams {
  * Create a new execution record
  */
 export function createExecution(params: CreateExecutionParams): void {
-  const stmt = db.prepare(`
+  const stmt = getDb().prepare(`
     INSERT INTO execution_history (
       id, workflow_id, workflow_name, started_at, status
     ) VALUES (?, ?, ?, ?, ?)
@@ -85,7 +85,7 @@ export function createExecution(params: CreateExecutionParams): void {
  * Finish an execution record with final data
  */
 export function finishExecution(params: FinishExecutionParams): void {
-  const stmt = db.prepare(`
+  const stmt = getDb().prepare(`
     UPDATE execution_history
     SET finished_at = ?, duration = ?, status = ?, final_context = ?, error = ?
     WHERE id = ?
@@ -105,7 +105,7 @@ export function finishExecution(params: FinishExecutionParams): void {
  * Log a node execution
  */
 export function logNodeExecution(params: LogNodeExecutionParams): void {
-  const stmt = db.prepare(`
+  const stmt = getDb().prepare(`
     INSERT INTO node_execution_log (
       id, execution_id, node_id, node_name, node_type, status,
       started_at, finished_at, duration, context_snapshot, error, error_code
@@ -132,7 +132,7 @@ export function logNodeExecution(params: LogNodeExecutionParams): void {
  * Get all executions for a workflow
  */
 export function getExecutionsByWorkflow(workflowId: string): ExecutionHistory[] {
-  const stmt = db.prepare(`
+  const stmt = getDb().prepare(`
     SELECT * FROM execution_history
     WHERE workflow_id = ?
     ORDER BY started_at DESC
@@ -145,7 +145,7 @@ export function getExecutionsByWorkflow(workflowId: string): ExecutionHistory[] 
  * Get all executions (with optional limit)
  */
 export function getAllExecutions(limit: number = 100): ExecutionHistory[] {
-  const stmt = db.prepare(`
+  const stmt = getDb().prepare(`
     SELECT * FROM execution_history
     ORDER BY started_at DESC
     LIMIT ?
@@ -158,7 +158,7 @@ export function getAllExecutions(limit: number = 100): ExecutionHistory[] {
  * Get a single execution by ID
  */
 export function getExecutionById(id: string): ExecutionHistory | null {
-  const stmt = db.prepare(`
+  const stmt = getDb().prepare(`
     SELECT * FROM execution_history
     WHERE id = ?
   `)
@@ -170,7 +170,7 @@ export function getExecutionById(id: string): ExecutionHistory | null {
  * Get node logs for an execution
  */
 export function getNodeLogsByExecution(executionId: string): NodeExecutionLog[] {
-  const stmt = db.prepare(`
+  const stmt = getDb().prepare(`
     SELECT * FROM node_execution_log
     WHERE execution_id = ?
     ORDER BY started_at ASC
@@ -185,7 +185,7 @@ export function getNodeLogsByExecution(executionId: string): NodeExecutionLog[] 
 export function deleteOldExecutions(olderThanDays: number): number {
   const cutoffTime = Date.now() - olderThanDays * 24 * 60 * 60 * 1000
 
-  const stmt = db.prepare(`
+  const stmt = getDb().prepare(`
     DELETE FROM execution_history
     WHERE started_at < ?
   `)
@@ -198,7 +198,7 @@ export function deleteOldExecutions(olderThanDays: number): number {
  * Get execution statistics for a workflow
  */
 export function getWorkflowStats(workflowId: string) {
-  const stmt = db.prepare(`
+  const stmt = getDb().prepare(`
     SELECT
       COUNT(*) as total_executions,
       SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful,

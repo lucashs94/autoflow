@@ -117,7 +117,7 @@ export function useIPCMutation<TData, TVariables>({
       // Show success toast if message is provided
       if (successMessage) {
         toast.success(successMessage, {
-          id: 'create-workflow',
+          id: toastId,
         })
       }
 

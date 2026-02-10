@@ -5,6 +5,7 @@ export class BrowserController {
   private static instance: BrowserController | null = null
   private browser: Browser | null = null
   private page: Page | null = null
+  private currentHeadless: boolean | null = null
   shouldStop: boolean = false
   abortController: AbortController | null = null
 
@@ -66,6 +67,7 @@ export class BrowserController {
       }
       this.browser = null
       this.page = null
+      this.currentHeadless = null
     }
   }
 
@@ -97,53 +99,59 @@ export class BrowserController {
 
     // If we have an existing browser, check if it's truly usable
     if (this.browser && this.browser.connected) {
-      // First, check if current page reference is still usable
-      const pageUsable = await this.isPageUsable()
+      // If headless mode changed, force restart the browser
+      if (this.currentHeadless !== null && this.currentHeadless !== headless) {
+        await this.forceCloseBrowser()
+        // Fall through to relaunch browser with new headless setting
+      } else {
+        // First, check if current page reference is still usable
+        const pageUsable = await this.isPageUsable()
 
-      if (pageUsable) {
-        return
-      }
-
-      // Current page not usable - try to find another usable page in the browser
-      try {
-        const pages = await this.browser.pages()
-
-        // Try to find a usable page
-        for (const page of pages) {
-          try {
-            if (!page.isClosed()) {
-              await page.evaluate(() => true)
-              this.page = page
-              this.page.setDefaultTimeout(30_000)
-              return
-            }
-          } catch {
-            // This page is not usable, continue
-          }
+        if (pageUsable) {
+          return
         }
 
-        // No usable pages found - create a new one
-        this.page = await this.browser.newPage()
-        this.page.setDefaultTimeout(30_000)
+        // Current page not usable - try to find another usable page in the browser
+        try {
+          const pages = await this.browser.pages()
 
-        // Verify the new page works
-        await this.page.evaluate(() => true)
-
-        // Close ALL other pages to prevent tab accumulation
-        const allPages = await this.browser.pages()
-        for (const p of allPages) {
-          if (p !== this.page) {
+          // Try to find a usable page
+          for (const page of pages) {
             try {
-              await p.close()
+              if (!page.isClosed()) {
+                await page.evaluate(() => true)
+                this.page = page
+                this.page.setDefaultTimeout(30_000)
+                return
+              }
             } catch {
-              // Page might already be closed
+              // This page is not usable, continue
             }
           }
-        }
 
-        return
-      } catch {
-        // Fall through to restart browser
+          // No usable pages found - create a new one
+          this.page = await this.browser.newPage()
+          this.page.setDefaultTimeout(30_000)
+
+          // Verify the new page works
+          await this.page.evaluate(() => true)
+
+          // Close ALL other pages to prevent tab accumulation
+          const allPages = await this.browser.pages()
+          for (const p of allPages) {
+            if (p !== this.page) {
+              try {
+                await p.close()
+              } catch {
+                // Page might already be closed
+              }
+            }
+          }
+
+          return
+        } catch {
+          // Fall through to restart browser
+        }
       }
     }
 
@@ -159,11 +167,13 @@ export class BrowserController {
       defaultViewport: null,
       args: ['--start-maximized', '--no-sandbox', '--disable-setuid-sandbox'],
     })
+    this.currentHeadless = headless
 
     // Set up disconnect handler
     this.browser.on('disconnected', () => {
       this.browser = null
       this.page = null
+      this.currentHeadless = null
     })
 
     // Get the default page or create one
@@ -196,6 +206,7 @@ export class BrowserController {
       }
       this.browser = null
       this.page = null
+      this.currentHeadless = null
     }
   }
 

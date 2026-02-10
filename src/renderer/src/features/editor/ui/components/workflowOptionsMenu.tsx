@@ -9,6 +9,7 @@ import {
 import { Switch } from '@renderer/components/ui/switch'
 import { exportWorkflow } from '@renderer/features/workflows/functions/exportWorkflow'
 import { isSuccess } from '@shared/@types/ipc-response'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import {
   CopyIcon,
@@ -40,6 +41,7 @@ export function WorkflowOptionsMenu({
 }: WorkflowOptionsMenuProps) {
   void _workflowName
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [isVisualMode, setIsVisualMode] = useState(!headless)
   const [isExporting, setIsExporting] = useState(false)
   const [isDuplicating, setIsDuplicating] = useState(false)
@@ -59,6 +61,7 @@ export function WorkflowOptionsMenu({
 
       // Save to database (headless is the opposite of visual mode)
       await window.api.workflows.updateHeadless(workflowId, !checked)
+      queryClient.invalidateQueries({ queryKey: ['workflow', workflowId] })
     } catch (error) {
       console.error('Failed to update visual mode:', error)
       // Revert on error

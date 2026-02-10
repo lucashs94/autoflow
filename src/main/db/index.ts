@@ -5,22 +5,27 @@ import { app } from 'electron'
 import fs from 'fs'
 import path from 'path'
 
-const folderPath = path.join(app.getPath('userData'), 'database')
+let _db: BetterSqlite3Database | null = null
 
-// Cria o arquivo se não existir
-if (!fs.existsSync(folderPath)) {
-  console.log('📦 Criando banco SQLite...')
-  fs.mkdirSync(folderPath)
-}
+export function getDb(): BetterSqlite3Database {
+  if (_db) return _db
 
-const dbPath = path.join(folderPath, 'app.db')
+  const folderPath = path.join(app.getPath('userData'), 'database')
 
-export const db: BetterSqlite3Database = new Database(dbPath)
+  // Cria o arquivo se não existir
+  if (!fs.existsSync(folderPath)) {
+    console.log('📦 Criando banco SQLite...')
+    fs.mkdirSync(folderPath)
+  }
 
-console.log('🚀 Inicializando tabelas...')
+  const dbPath = path.join(folderPath, 'app.db')
 
-db.exec(
-  `
+  _db = new Database(dbPath)
+
+  console.log('🚀 Inicializando tabelas...')
+
+  _db.exec(
+    `
     CREATE TABLE IF NOT EXISTS workflows (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -81,34 +86,37 @@ db.exec(
     CREATE INDEX IF NOT EXISTS idx_execution_workflow ON execution_history(workflow_id, started_at DESC);
     CREATE INDEX IF NOT EXISTS idx_node_execution ON node_execution_log(execution_id, started_at);
   `
-)
+  )
 
-// Migration: Add headless column to workflows table if it doesn't exist
-try {
-  const tableInfo = db.prepare('PRAGMA table_info(workflows)').all() as Array<{ name: string }>
-  const hasHeadless = tableInfo.some((col) => col.name === 'headless')
+  // Migration: Add headless column to workflows table if it doesn't exist
+  try {
+    const tableInfo = _db.prepare('PRAGMA table_info(workflows)').all() as Array<{ name: string }>
+    const hasHeadless = tableInfo.some((col) => col.name === 'headless')
 
-  if (!hasHeadless) {
-    console.log('🔄 Running migration: Adding headless column to workflows...')
-    db.exec('ALTER TABLE workflows ADD COLUMN headless INTEGER NOT NULL DEFAULT 1')
-    console.log('✔ Migration completed.')
+    if (!hasHeadless) {
+      console.log('🔄 Running migration: Adding headless column to workflows...')
+      _db.exec('ALTER TABLE workflows ADD COLUMN headless INTEGER NOT NULL DEFAULT 1')
+      console.log('✔ Migration completed.')
+    }
+  } catch (err) {
+    console.error('Migration error:', err)
   }
-} catch (err) {
-  console.error('Migration error:', err)
-}
 
-// Migration: Add error_code column to node_execution_log table if it doesn't exist
-try {
-  const nodeLogTableInfo = db.prepare('PRAGMA table_info(node_execution_log)').all() as Array<{ name: string }>
-  const hasErrorCode = nodeLogTableInfo.some((col) => col.name === 'error_code')
+  // Migration: Add error_code column to node_execution_log table if it doesn't exist
+  try {
+    const nodeLogTableInfo = _db.prepare('PRAGMA table_info(node_execution_log)').all() as Array<{ name: string }>
+    const hasErrorCode = nodeLogTableInfo.some((col) => col.name === 'error_code')
 
-  if (!hasErrorCode) {
-    console.log('🔄 Running migration: Adding error_code column to node_execution_log...')
-    db.exec('ALTER TABLE node_execution_log ADD COLUMN error_code TEXT')
-    console.log('✔ Migration completed.')
+    if (!hasErrorCode) {
+      console.log('🔄 Running migration: Adding error_code column to node_execution_log...')
+      _db.exec('ALTER TABLE node_execution_log ADD COLUMN error_code TEXT')
+      console.log('✔ Migration completed.')
+    }
+  } catch (err) {
+    console.error('Migration error:', err)
   }
-} catch (err) {
-  console.error('Migration error:', err)
-}
 
-console.log('✔ Banco inicializado.')
+  console.log('✔ Banco inicializado.')
+
+  return _db
+}
