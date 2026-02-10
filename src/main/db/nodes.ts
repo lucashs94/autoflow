@@ -1,10 +1,10 @@
-import { db } from '.'
+import { getDb } from '.'
 import { NodeType } from './types'
 
 export function updateNodeName(nodeId: string, data: string) {
   const now = Date.now()
 
-  db.prepare('UPDATE nodes SET data = ?, updatedAt = ? WHERE id = ?').run(
+  getDb().prepare('UPDATE nodes SET data = ?, updatedAt = ? WHERE id = ?').run(
     data,
     now,
     nodeId
@@ -12,7 +12,7 @@ export function updateNodeName(nodeId: string, data: string) {
 }
 
 export function getNode(nodeId: string) {
-  const node = db
+  const node = getDb()
     .prepare('SELECT * FROM nodes WHERE id = ?')
     .get(nodeId) as NodeType
 

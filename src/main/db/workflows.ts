@@ -1,5 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
-import { db } from '.'
+import { getDb } from '.'
 import {
   CreateEdgeType,
   CreateNodeType,
@@ -12,14 +12,14 @@ export function createWorkflow(name: string) {
   const workflowId = createId()
   const nodeId = createId()
 
-  db.transaction(() => {
+  getDb().transaction(() => {
     const now = Date.now()
 
-    db.prepare(
+    getDb().prepare(
       `INSERT INTO workflows (id, name, createdAt, updatedAt) VALUES (?, ?, ?, ?)`
     ).run(workflowId, name, now, now)
 
-    db.prepare(
+    getDb().prepare(
       `INSERT INTO nodes (id, workflowId, type, position, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)`
     ).run(
       nodeId,
@@ -35,13 +35,13 @@ export function createWorkflow(name: string) {
 }
 
 export function getWorkflow(workflowId: string) {
-  const workflow = db
+  const workflow = getDb()
     .prepare('SELECT * FROM workflows WHERE id = ?')
     .get(workflowId) as WorkflowType
-  const nodes = db
+  const nodes = getDb()
     .prepare('SELECT * FROM nodes WHERE workflowId = ?')
     .all(workflowId) as NodeType[]
-  const edges = db
+  const edges = getDb()
     .prepare('SELECT * FROM connections WHERE workflowId = ?')
     .all(workflowId) as EdgeType[]
 
@@ -49,7 +49,7 @@ export function getWorkflow(workflowId: string) {
 }
 
 export function getWorkflows() {
-  return db.prepare('SELECT * FROM workflows').all() as WorkflowType[]
+  return getDb().prepare('SELECT * FROM workflows').all() as WorkflowType[]
 }
 
 export function updateWorkflow(
@@ -57,16 +57,16 @@ export function updateWorkflow(
   nodes: CreateNodeType[],
   edges: CreateEdgeType[]
 ) {
-  db.transaction(() => {
+  getDb().transaction(() => {
     // delete old nodes and edges
-    db.prepare('DELETE FROM connections WHERE workflowId = ?').run(workflowId)
-    db.prepare('DELETE FROM nodes WHERE workflowId = ?').run(workflowId)
+    getDb().prepare('DELETE FROM connections WHERE workflowId = ?').run(workflowId)
+    getDb().prepare('DELETE FROM nodes WHERE workflowId = ?').run(workflowId)
 
     const now = Date.now()
 
     // insert new nodes and edges
     nodes.forEach((node) => {
-      db.prepare(
+      getDb().prepare(
         `INSERT INTO nodes (id, workflowId, type, position, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
           workflowId=excluded.workflowId,
@@ -79,7 +79,7 @@ export function updateWorkflow(
     })
 
     edges.forEach((edge) => {
-      db.prepare(
+      getDb().prepare(
         `INSERT INTO connections (id, workflowId, fromNodeId, toNodeId, fromOutput, toInput, createdAt, updatedAt) 
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET
@@ -102,7 +102,7 @@ export function updateWorkflow(
       )
     })
 
-    db.prepare('UPDATE workflows SET updatedAt = ? WHERE id = ?').run(
+    getDb().prepare('UPDATE workflows SET updatedAt = ? WHERE id = ?').run(
       now,
       workflowId
     )
@@ -111,7 +111,7 @@ export function updateWorkflow(
 
 export function updateWorkflowName(workflowId: string, name: string) {
   const now = Date.now()
-  db.prepare('UPDATE workflows SET name = ?, updatedAt = ? WHERE id = ?').run(
+  getDb().prepare('UPDATE workflows SET name = ?, updatedAt = ? WHERE id = ?').run(
     name,
     now,
     workflowId
@@ -120,7 +120,7 @@ export function updateWorkflowName(workflowId: string, name: string) {
 
 export function updateWorkflowHeadless(workflowId: string, headless: boolean) {
   const now = Date.now()
-  db.prepare('UPDATE workflows SET headless = ?, updatedAt = ? WHERE id = ?').run(
+  getDb().prepare('UPDATE workflows SET headless = ?, updatedAt = ? WHERE id = ?').run(
     headless ? 1 : 0,
     now,
     workflowId
@@ -128,10 +128,10 @@ export function updateWorkflowHeadless(workflowId: string, headless: boolean) {
 }
 
 export function deleteWorkflow(workflowId: string) {
-  db.transaction(() => {
+  getDb().transaction(() => {
     // delete old nodes, edges and workflow
-    db.prepare('DELETE FROM connections WHERE workflowId = ?').run(workflowId)
-    db.prepare('DELETE FROM nodes WHERE workflowId = ?').run(workflowId)
-    db.prepare('DELETE FROM workflows WHERE id = ?').run(workflowId)
+    getDb().prepare('DELETE FROM connections WHERE workflowId = ?').run(workflowId)
+    getDb().prepare('DELETE FROM nodes WHERE workflowId = ?').run(workflowId)
+    getDb().prepare('DELETE FROM workflows WHERE id = ?').run(workflowId)
   })()
 }
