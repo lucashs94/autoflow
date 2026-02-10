@@ -16,6 +16,10 @@ interface ImportedWorkflow {
       type: string
       position: { x: number; y: number }
       data: Record<string, unknown>
+      width?: number
+      height?: number
+      zIndex?: number
+      style?: Record<string, unknown>
     }>
     edges: Array<{
       id: string
@@ -99,15 +103,27 @@ export async function importWorkflow({
   }
 
   // Transform imported nodes with new IDs and offset
-  const transformedNodes = importedNodesFiltered.map((node) => ({
-    id: idMap.get(node.id)!,
-    type: node.type,
-    position: {
-      x: node.position.x,
-      y: hasOnlyInitial ? node.position.y : node.position.y + yOffset,
-    },
-    data: node.data,
-  }))
+  const transformedNodes = importedNodesFiltered.map((node) => {
+    const base = {
+      id: idMap.get(node.id)!,
+      type: node.type,
+      position: {
+        x: node.position.x,
+        y: hasOnlyInitial ? node.position.y : node.position.y + yOffset,
+      },
+      data: node.data,
+    }
+    if (node.type === 'STICKY_NOTE') {
+      return {
+        ...base,
+        ...(node.width !== undefined && { width: node.width }),
+        ...(node.height !== undefined && { height: node.height }),
+        ...(node.zIndex !== undefined && { zIndex: node.zIndex }),
+        ...(node.style && { style: node.style }),
+      }
+    }
+    return base
+  })
 
   // Transform imported edges with new IDs
   const transformedEdges = importedEdgesFiltered.map((edge) => ({

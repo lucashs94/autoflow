@@ -14,6 +14,10 @@ interface ExportedWorkflow {
       type: string
       position: { x: number; y: number }
       data: Record<string, unknown>
+      width?: number
+      height?: number
+      zIndex?: number
+      style?: Record<string, unknown>
     }>
     edges: Array<{
       id: string
@@ -42,14 +46,26 @@ export async function exportWorkflow(workflowId: string): Promise<void> {
     workflow: {
       name: workflow.name,
       settings: {
-        headless: true, // TODO: Read from workflow settings when implemented
+        headless: workflow.headless ?? true,
       },
-      nodes: workflow.nodes.map((node) => ({
-        id: node.id,
-        type: node.type || 'unknown',
-        position: node.position,
-        data: node.data as Record<string, unknown>,
-      })),
+      nodes: workflow.nodes.map((node) => {
+        const base = {
+          id: node.id,
+          type: node.type || 'unknown',
+          position: node.position,
+          data: node.data as Record<string, unknown>,
+        }
+        if (node.type === 'STICKY_NOTE') {
+          return {
+            ...base,
+            ...(node.width !== undefined && { width: node.width }),
+            ...(node.height !== undefined && { height: node.height }),
+            ...(node.zIndex !== undefined && { zIndex: node.zIndex }),
+            ...(node.style && { style: node.style as Record<string, unknown> }),
+          }
+        }
+        return base
+      }),
       edges: workflow.edges.map((edge) => ({
         id: edge.id,
         source: edge.source,
