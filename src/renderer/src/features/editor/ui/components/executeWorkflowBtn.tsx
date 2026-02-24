@@ -1,5 +1,6 @@
 import { Button } from '@renderer/components/ui/button'
 import { useExecuteWorkflow } from '@renderer/features/workflows/hooks/useWorkflows'
+import { motion } from 'framer-motion'
 import { FlaskConicalIcon, LoaderIcon, SquareIcon, DownloadIcon } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -111,12 +112,13 @@ export function ExecuteWorkflowBtn({
   const isDisabled = executeWorkflow.isPending || hasChanges || isDownloading
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-row-reverse gap-2">
       <Button
         size={'lg'}
         onClick={handleExecute}
         disabled={isDisabled}
-        className="disabled:cursor-not-allowed! cursor-pointer! relative"
+        className="disabled:cursor-not-allowed! cursor-pointer! px-4!"
+        style={{ transition: 'none' }}
       >
         {isDownloading ? (
           <>
@@ -125,7 +127,13 @@ export function ExecuteWorkflowBtn({
           </>
         ) : executeWorkflow.isPending ? (
           <>
-            <LoaderIcon className="animate-spin" />
+            <motion.div
+              className="size-4 shrink-0 flex items-center justify-center"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: 'linear', repeatType: 'loop' }}
+            >
+              <LoaderIcon className="size-4" />
+            </motion.div>
             Execute Workflow
           </>
         ) : (
@@ -136,16 +144,19 @@ export function ExecuteWorkflowBtn({
         )}
       </Button>
 
-      {executeWorkflow.isPending && (
-        <Button
-          size={'lg'}
-          onClick={handleCancel}
-          variant={'destructive'}
-          className="disabled:cursor-not-allowed! cursor-pointer! animate-in fade-in-0 zoom-in-95 slide-in-from-right-2 duration-500 ease-out"
-        >
-          <SquareIcon />
-        </Button>
-      )}
+      <Button
+        size={'lg'}
+        onClick={handleCancel}
+        variant={'destructive'}
+        disabled={!executeWorkflow.isPending}
+        className={`disabled:cursor-not-allowed! cursor-pointer! ${
+          executeWorkflow.isPending
+            ? 'animate-in fade-in-0 zoom-in-95 slide-in-from-left-2 duration-500 ease-out'
+            : 'invisible'
+        }`}
+      >
+        <SquareIcon />
+      </Button>
     </div>
   )
 }
