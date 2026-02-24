@@ -111,10 +111,12 @@ export const useExecuteWorkflow = () => {
       workflowId: string
       signal?: AbortSignal
     }) => await executeWorkflow(workflowId, signal),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      if (variables.signal?.aborted) return
       toast.success(`Workflow executed!`)
     },
-    onError: (error) => {
+    onError: (error, variables) => {
+      if (variables.signal?.aborted) return
       toast.error(`Failed to execute workflow`, {
         description: error.message,
       })
