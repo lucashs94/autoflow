@@ -1,5 +1,5 @@
 import { electronAPI } from '@electron-toolkit/preload'
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { chrome } from './chrome.preload'
 import { executions } from './executions.preload'
 import { history } from './history.preload'
@@ -8,6 +8,9 @@ import { workflows } from './workflows.preload'
 
 // Custom APIs for renderer
 const api = {
+  app: {
+    signalReady: () => ipcRenderer.send('app:ready'),
+  },
   chrome,
   workflows,
   nodes,

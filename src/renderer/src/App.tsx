@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createHashHistory, createRouter, RouterProvider } from '@tanstack/react-router'
 import { Provider as JotaiProvider } from 'jotai'
 import { BadgeAlertIcon, BadgeCheckIcon, BadgeXIcon } from 'lucide-react'
+import { useEffect } from 'react'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from './components/themeProvider'
 import { routeTree } from './routeTree.gen'
@@ -22,6 +23,10 @@ declare module '@tanstack/react-router' {
 }
 
 export function App(): React.JSX.Element {
+  useEffect(() => {
+    window.api.app.signalReady()
+  }, [])
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark">

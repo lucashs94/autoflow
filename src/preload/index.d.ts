@@ -20,6 +20,9 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: {
+      app: {
+        signalReady: () => void
+      }
       chrome: {
         getStatus: () => Promise<IPCResult<ChromeStatus>>
         isAvailable: () => Promise<IPCResult<boolean>>
