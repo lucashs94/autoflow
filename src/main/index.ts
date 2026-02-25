@@ -1,5 +1,5 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, screen, shell } from 'electron'
 import path, { join } from 'path'
 import icon from './assets/icon.png?asset'
 import './ipc'
@@ -16,8 +16,9 @@ app.setAboutPanelOptions({
 })
 
 export let mainWindow: BrowserWindow | null = null
+let splashShown = false
 
-function createWindow(): void {
+function createWindow(showImmediately = false): void {
   mainWindow = new BrowserWindow({
     title: 'Web Automation',
     width: 1400,
@@ -35,6 +36,10 @@ function createWindow(): void {
     },
   })
 
+  if (showImmediately) {
+    mainWindow.once('ready-to-show', () => mainWindow?.show())
+  }
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
@@ -48,12 +53,19 @@ function createWindow(): void {
 }
 
 function createSplashWindow(): BrowserWindow {
+  const W = 380
+  const H = 240
+  const { workArea } = screen.getDisplayNearestPoint(screen.getCursorScreenPoint())
+  const x = Math.round(workArea.x + (workArea.width - W) / 2)
+  const y = Math.round(workArea.y + (workArea.height - H) / 2)
+
   const splash = new BrowserWindow({
-    width: 380,
-    height: 240,
+    width: W,
+    height: H,
+    x,
+    y,
     frame: false,
     resizable: false,
-    center: true,
     alwaysOnTop: true,
     transparent: true,
     show: false,
@@ -92,10 +104,11 @@ app.whenReady().then(() => {
     if (mainWindow) {
       mainWindow.show()
     }
+    splashShown = true
   })
 
   app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) createWindow(splashShown)
   })
 })
 
